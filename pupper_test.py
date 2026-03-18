@@ -15,20 +15,20 @@ builder.default_shape_kd = 250.0        #contact damping,
 builder.default_shape_kf = 500.0        #fiction stiffness
 builder.default_shape_margin = 0.01     #collision margin (1cm, how close objects can get before collision detected)
 
-wp_sim.parse_urdf("/teamspace/studios/this_studio/puppersim/puppersim/puppersim/data/pupper_v2a.urdf", builder, floating=True) #load urdf into builder
+wp_sim.parse_urdf("/teamspace/studios/this_studio/urdf/standford_pupper.urdf", builder, floating=True) #load urdf into builder
 model = builder.finalize(device)    #uploads model to gpu, final
-model.ground = False               #enable ground plane
+model.ground = True             #enable ground plane
 
 # 2. Setup State 
 state_in = model.state()            #state inputs buffer
 state_out = model.state()           #tate outputs buffer
 
 q = state_in.body_q.numpy()  
-q[0] = [0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0] #sets the base link pose
+q[0] = [0.0, 0.0, 0.212, 0.0, 0.0, 0.0, 1.0] #sets the base link pose
 state_in.body_q.assign(q)                #assign position to warp tensor on GPU
 
 # 3. Initialize the Integrator
-integrator = wp_sim.SemiImplicitIntegrator()             #create a stable physics solver
+integrator = wp_sim.XPBDIntegrator(iterations=10)            #create a stable physics solver
 
 # 4. Setup Renderer
 renderer = wp_sim.render.SimRenderer(model, "outputs/o4.usd", fps=60)  #to visualize
