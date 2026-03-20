@@ -15,7 +15,7 @@ builder.default_shape_kd = 250.0        #contact damping,
 builder.default_shape_kf = 500.0        #fiction stiffness
 builder.default_shape_margin = 0.01     #collision margin (1cm, how close objects can get before collision detected)
 
-wp_sim.parse_urdf("/teamspace/studios/this_studio/urdf/standford_pupper.urdf", builder, floating=True) #load urdf into builder
+wp_sim.parse_urdf("urdf/standford_pupper.urdf", builder, floating=True)
 model = builder.finalize(device)    #uploads model to gpu, final
 model.ground = True             #enable ground plane
 
@@ -31,7 +31,7 @@ state_in.body_q.assign(q)                #assign position to warp tensor on GPU
 integrator = wp_sim.XPBDIntegrator(iterations=10)            #create a stable physics solver
 
 # 4. Setup Renderer
-renderer = wp_sim.render.SimRenderer(model, "outputs/o4.usd", fps=60)  #to visualize
+renderer = wp_sim.render.SimRenderer(model, "outputs/o8.usd", fps=60)  #to visualize
 
 # 5. Simulation Loop
 state_in.body_qd.zero_()        #set velocities to 0 to start
@@ -42,7 +42,7 @@ for i in range(200):
     integrator.simulate(model, state_in, state_out, dt=1.0/2000.0)
     state_in, state_out = state_out, state_in
     q = state_in.body_q.numpy()
-    print(f"step {i:3d} | body z={q[0][2]:.4f} | RF_TOE z={q[13][2]:.4f}")
+    print(f"step {i:3d} | body z={q[0][2]:.4f} | RF_TOE z={q[8][2]:.4f}")
 
 # now run the real loop
 for i in range(100):

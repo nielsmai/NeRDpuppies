@@ -29,7 +29,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/base_link.STL" />
+          filename="meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -43,7 +43,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/base_link.STL" />
+          filename="meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -71,7 +71,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LF_HIP.STL" />
+          filename="meshes/LF_HIP.STL" />
       </geometry>
       <material
         name="">
@@ -124,7 +124,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LF_THIGH.STL" />
+          filename="meshes/LF_THIGH.STL" />
       </geometry>
       <material
         name="">
@@ -170,7 +170,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LF_THIGH_FOOT.STL" />
+          filename="meshes/LF_THIGH_FOOT.STL" />
       </geometry>
       <material
         name="">
@@ -220,7 +220,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RF_HIP.STL" />
+          filename="meshes/RF_HIP.STL" />
       </geometry>
       <material
         name="">
@@ -265,7 +265,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RF_THIGH.STL" />
+          filename="meshes/RF_THIGH.STL" />
       </geometry>
       <material
         name="">
@@ -310,7 +310,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RF_THIGH_FOOT.STL" />
+          filename="meshes/RF_THIGH_FOOT.STL" />
       </geometry>
       <material
         name="">
@@ -358,7 +358,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LH_HIP.STL" />
+          filename="meshes/LH_HIP.STL" />
       </geometry>
       <material
         name="">
@@ -405,7 +405,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LH_THIGH.STL" />
+          filename="meshes/LH_THIGH.STL" />
       </geometry>
       <material
         name="">
@@ -452,7 +452,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/LH_THIGH_FOOT.STL" />
+          filename="meshes/LH_THIGH_FOOT.STL" />
       </geometry>
       <material
         name="">
@@ -498,7 +498,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RH_HIP.STL" />
+          filename="meshes/RH_HIP.STL" />
       </geometry>
       <material
         name="">
@@ -544,7 +544,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RH_THIGH.STL" />
+          filename="meshes/RH_THIGH.STL" />
       </geometry>
       <material
         name="">
@@ -589,7 +589,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RH_THIGH_FOOT.STL" />
+          filename="meshes/RH_THIGH_FOOT.STL" />
       </geometry>
       <collision>
       <origin
@@ -597,7 +597,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="/teamspace/studios/this_studio/urdf/meshes/RH_THIGH_FOOT.STL" />
+          filename="meshes/RH_THIGH_FOOT.STL" />
       </geometry>
     </collision>
       <material
