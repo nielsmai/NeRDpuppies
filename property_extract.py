@@ -1,97 +1,89 @@
-import warp as wp
-import warp.sim as wp_sim
-import warp.sim.render
 import numpy as np
+import xml.etree.ElementTree as ET
 
-# 0. Initialize
-wp.init()
-device = "cuda" if wp.is_cuda_available() else "cpu"
+# Path to your URDF
+urdf_path = "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf"
 
-# 1. Setup Model
-builder = wp_sim.ModelBuilder(up_vector=(0.0, 0.0, 1.0))
-builder.default_shape_margin = 0.001
-wp_sim.parse_urdf("/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf", builder, floating=True)
-model = builder.finalize(device)
+try:
+    tree = ET.parse(urdf_path)
+    root = tree.getroot()
+except FileNotFoundError:
+    print(f"ERROR: Could not find {urdf_path}")
+    print("Please check the path.")
+    exit()
 
-# === STRUCTURE (before simulation) ===
-print("=== STRUCTURE ===")
-print("body count:", model.body_count)
-print("shape count:", model.shape_count)
+joint_limits_min = []
+joint_limits_max = []
+joint_vel_limits = []
 
+# Standard Pupper Joint Order (Verify this matches your URDF joint names)
+# If your URDF has different names, this script will try to find all 12 continuous/revolute joints
+expected_joints = 12
+found_joints = []
 
-# === INTEGRATOR CHECK ===
-print("\n=== INTEGRATOR CHECK ===")
-state_test = model.state()
-print("joint_q available:", hasattr(state_test, 'joint_q') and state_test.joint_q is not None)
-print("body_q available:", hasattr(state_test, 'body_q') and state_test.body_q is not None)
+print(f"Parsing {urdf_path}...\n")
 
-model.ground = True
-model.joint_ke = 1000.0
-model.joint_kd = 100.0
+for joint in root.findall('.//joint'):
+    j_type = joint.get('type')
+    if j_type in ['revolute', 'continuous']:
+        name = joint.get('name')
+        limit = joint.find('limit')
+        
+        if limit is not None:
+            lower = float(limit.get('lower', -3.14))
+            upper = float(limit.get('upper', 3.14))
+            velocity = float(limit.get('velocity', 10.0))
+            
+            found_joints.append(name)
+            joint_limits_min.append(lower)
+            joint_limits_max.append(upper)
+            joint_vel_limits.append(velocity)
 
-# 2. Setup State
-state_in = model.state()
-state_out = model.state()
+if len(found_joints) != expected_joints:
+    print(f"WARNING: Found {len(found_joints)} joints, expected {expected_joints}.")
+    print(f"Joints found: {found_joints}")
+    print("Check if your URDF has fixed joints or if the order is different.\n")
+else:
+    print(f"Successfully found {len(found_joints)} joints.")
 
-def set_base_pose(state, x, y, z, roll_deg=0):
-    q = state.body_q.numpy()
-    qx, qy, qz, qw = 0.0, 0.0, 0.0, 1.0
-    if roll_deg == 180:
-        qx, qy, qz, qw = 1.0, 0.0, 0.0, 0.0
-    q[0] = [x, y, z, qx, qy, qz, qw]
-    state.body_q.assign(q)
+# Print the code block for commons.py
+print("\n--- COPY THE BELOW INTO utils/commons.py ---\n")
 
-set_base_pose(state_in, 0.0, 0.0, 0.4, roll_deg=0)
-state_in.body_qd.zero_()
+print("# Pupper V2 Limits extracted from URDF")
+print(f"# Joints order: {found_joints}\n")
 
-# 3. Simulation Settings
-integrator = wp_sim.XPBDIntegrator(iterations=30)
-renderer = wp_sim.render.SimRenderer(model, "outputs/test_local_kat.usd", fps=60)
+print("JOINT_Q_MIN['Pupper'] = np.array([")
+for i in range(0, len(joint_limits_min), 3):
+    chunk = joint_limits_min[i:i+3]
+    comment = ""
+    if i == 0: comment = "  # FL"
+    elif i == 3: comment = "  # FR"
+    elif i == 6: comment = "  # RL"
+    elif i == 9: comment = "  # RR"
+    print(f"    {chunk[0]:.4f}, {chunk[1]:.4f}, {chunk[2]:.4f},{comment}")
+print("], dtype=np.float32)\n")
 
-# 4. Simulation Loop
-dt = 1.0 / 120.0
-for i in range(200):
-    state_in.clear_forces()
-    wp.sim.collide(model, state_in)
-    integrator.simulate(model, state_in, state_out, dt)
-    state_in, state_out = state_out, state_in
+print("JOINT_Q_MAX['Pupper'] = np.array([")
+for i in range(0, len(joint_limits_max), 3):
+    chunk = joint_limits_max[i:i+3]
+    comment = ""
+    if i == 0: comment = "  # FL"
+    elif i == 3: comment = "  # FR"
+    elif i == 6: comment = "  # RL"
+    elif i == 9: comment = "  # RR"
+    print(f"    {chunk[0]:.4f}, {chunk[1]:.4f}, {chunk[2]:.4f},{comment}")
+print("], dtype=np.float32)\n")
 
-    # Body states at step 0
-    if i == 0:
-        q = state_in.body_q.numpy()
-        print("\n=== BODY STATES AT STEP 0 ===")
-        for j in range(model.body_count):
-            print(f"  body[{j}] pos={q[j][:3]}  quat={q[j][3:]}")
+print("# Velocity limits (Rad/s)")
+max_vel = max(joint_vel_limits)
+# We usually set a safe global limit slightly higher than the max in URDF or uniform
+print(f"JOINT_QD_MIN['Pupper'] = -{max_vel:.2f} * np.ones(12, dtype=np.float32)")
+print(f"JOINT_QD_MAX['Pupper'] = {max_vel:.2f} * np.ones(12, dtype=np.float32)\n")
 
-    # Log every 20 steps
-    if i % 20 == 0:
-        curr_q = state_in.body_q.numpy()
-        print(f"Step {i:3d} | Body Z: {curr_q[0][2]:.4f}")
-
-    # Stabilized state at step 160
-    if i == 160:
-        q = state_in.body_q.numpy()
-        print("\n=== STABILIZED HEIGHT ===")
-        print(f"  base z = {q[0][2]:.4f}")
-
-        depths = model.rigid_contact_depth.numpy()
-        print(f"\n=== CONTACTS ===")
-        print(f"  contact depth array shape: {depths.shape}")
-        print(f"  depths: {depths}")
-
-        # joint_q if available
-        if hasattr(state_in, 'joint_q') and state_in.joint_q is not None:
-            state_gen_q = state_in.joint_q.numpy()
-            print("\n=== JOINT_Q ===")
-            print(f"  shape: {state_gen_q.shape}")
-            print(f"  values: {state_gen_q}")
-        else:
-            print("\n=== JOINT_Q: not available (XPBD uses maximal coords) ===")
-
-    # Render
-    renderer.begin_frame(i * dt)
-    renderer.render(state_in)
-    renderer.end_frame()
-
-renderer.save()
-print("Done! Check outputs/test_local_kat.usd")
+print("# Action Scale (Torque)")
+print("# Estimate: Pupper servos are typically 2-5 Nm. Setting to 4.0 as safe default.")
+print("# If you know your specific servo stall torque, change the 4.0 below.")
+print("JOINT_ACT_SCALE['Pupper'] = np.array([")
+for i in range(0, 12, 3):
+    print(f"    4.0, 4.0, 4.0,  # Leg {i//3 + 1}")
+print("], dtype=np.float32)")
