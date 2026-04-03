@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="stanford_pupper">
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.0185439793772625 0.00085988 0.03132396" rpy="0 0 0"/>
+      <mass value="0.334134001274987"/>
+      <inertia ixx="0.00057643" ixy="0.00000275" ixz="-0.00000921"
+               iyx="0.00000275" iyy="0.00361791" iyz="-0.00000422"
+               izx="-0.00000921" izy="-0.00000422" izz="0.00383778"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/base_link.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.79216 0.81961 0.93333 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <geometry><box size="0.24 0.10 0.08"/></geometry>
+    </collision>
+  </link>
+
+  <!-- ═══════════════════════════════════════════════════════ LF LEG -->
+
+  <link name="LF_HIP">
+    <inertial>
+      <origin xyz="0.03672908 0.02740814 0.00118127" rpy="0 0 0"/>
+      <mass value="0.09551479"/>
+      <inertia ixx="8.36683671180298e-05" ixy="0" ixz="0"
+               iyy="5.289856175366819e-05" iyz="0"
+               izz="0.00010700079967936377"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LF_HIP.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.972549 0.968627 0.929411 1"/></material>
+    </visual>
+    <!-- no collision — not needed for locomotion training -->
+  </link>
+
+  <joint name="LF_HIP_JOINT" type="revolute">
+    <origin xyz="0.0705 0.04 0.02425" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="LF_HIP"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LF_THIGH">
+    <inertial>
+      <origin xyz="-0.04486232 -0.00163039 -0.02816178" rpy="0 0 0"/>
+      <mass value="0.00699575"/>
+      <inertia ixx="4.011071699334492e-06" ixy="0" ixz="0"
+               iyy="1.1878402750199946e-05" iyz="0"
+               izz="8.333714363349829e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LF_THIGH.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+    <!-- no collision -->
+  </link>
+
+  <joint name="LF_THIGH_JOINT" type="revolute">
+    <origin xyz="0.02735 0.029523 0.0012724" rpy="0.11522 0.436332 0.1069"/>
+    <parent link="LF_HIP"/>
+    <child link="LF_THIGH"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LF_THIGH_FOOT">
+    <inertial>
+      <origin xyz="0.04002073 0.00580157 -0.02456342" rpy="0 0 0"/>
+      <mass value="0.00294875"/>
+      <inertia ixx="1.7657563311842582e-06" ixy="0" ixz="0"
+               iyy="6.375349389948617e-06" iyz="0"
+               izz="4.649776510347592e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LF_THIGH_FOOT.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+    <!-- no collision -->
+  </link>
+
+  <joint name="LF_THIGH_FOOT_JOINT" type="revolute">
+    <origin xyz="0.022028 0.0023333 -0.12152" rpy="-3.1416 -2.35619 3.1416"/>
+    <parent link="LF_THIGH"/>
+    <child link="LF_THIGH_FOOT"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LF_TOE">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.002"/>
+      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="LF_TOE_JOINT" type="fixed">
+    <origin rpy="0 0 0" xyz="-0.01 0 -0.116"/>
+    <parent link="LF_THIGH_FOOT"/>
+    <child link="LF_TOE"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════ RF LEG -->
+
+  <link name="RF_HIP">
+    <inertial>
+      <origin xyz="0.03672910 -0.02740818 0.00118127" rpy="0 0 0"/>
+      <mass value="0.09551481"/>
+      <inertia ixx="8.36683846374877e-05" ixy="0" ixz="0"
+               iyy="5.289857283018561e-05" iyz="0"
+               izz="0.00010700082208443836"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RF_HIP.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.972549 0.968627 0.929411 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RF_HIP_JOINT" type="revolute">
+    <origin xyz="0.0705 -0.04 0.02425" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="RF_HIP"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RF_THIGH">
+    <inertial>
+      <origin xyz="-0.04407832 -0.00075984 -0.02770708" rpy="0 0 0"/>
+      <mass value="0.00716529"/>
+      <inertia ixx="4.19386946486895e-06" ixy="0" ixz="0"
+               iyy="1.2104016236055651e-05" iyz="0"
+               izz="8.683526344065076e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RF_THIGH.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.960784 0.960784 0.964705 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RF_THIGH_JOINT" type="revolute">
+    <origin xyz="0.02735 -0.029523 0.0012724" rpy="-0.11522 0.436332 -0.1069"/>
+    <parent link="RF_HIP"/>
+    <child link="RF_THIGH"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RF_THIGH_FOOT">
+    <inertial>
+      <origin xyz="0.04002067 -0.00366667 -0.02497144" rpy="0 0 0"/>
+      <mass value="0.00294875"/>
+      <inertia ixx="1.7524924876914674e-06" ixy="0" ixz="0"
+               iyy="6.381194355258551e-06" iyz="0"
+               izz="4.6306677015448675e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RF_THIGH_FOOT.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RF_THIGH_FOOT_JOINT" type="revolute">
+    <origin xyz="0.022028 -0.0023333 -0.12152" rpy="3.1416 -2.35619 -3.1416"/>
+    <parent link="RF_THIGH"/>
+    <child link="RF_THIGH_FOOT"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RF_TOE">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.002"/>
+      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="RF_TOE_JOINT" type="fixed">
+    <origin rpy="0 0 0" xyz="-0.01 0 -0.116"/>
+    <parent link="RF_THIGH_FOOT"/>
+    <child link="RF_TOE"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════ LH LEG -->
+
+  <link name="LH_HIP">
+    <inertial>
+      <origin xyz="0.03712908 0.02740814 0.00118127" rpy="0 0 0"/>
+      <mass value="0.09551479"/>
+      <inertia ixx="8.36683671180298e-05" ixy="0" ixz="0"
+               iyy="5.289856175366819e-05" iyz="0"
+               izz="0.00010700079967936377"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LH_HIP.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.972549 0.968627 0.929411 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="LH_HIP_JOINT" type="revolute">
+    <origin xyz="-0.1299 0.04 0.02425" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="LH_HIP"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LH_THIGH">
+    <inertial>
+      <origin xyz="-0.04407853 -0.00162684 -0.02766984" rpy="0 0 0"/>
+      <mass value="0.00716530"/>
+      <inertia ixx="4.108284608117991e-06" ixy="0" ixz="0"
+               iyy="1.2166289422293203e-05" iyz="0"
+               izz="8.53569145948762e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LH_THIGH.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.960784 0.960784 0.964705 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="LH_THIGH_JOINT" type="revolute">
+    <origin xyz="0.02775 0.029523 0.0012724" rpy="0.11522 0.436332 0.1069"/>
+    <parent link="LH_HIP"/>
+    <child link="LH_THIGH"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LH_THIGH_FOOT">
+    <inertial>
+      <origin xyz="0.04002073 0.00551265 -0.02458837" rpy="0 0 0"/>
+      <mass value="0.00294875"/>
+      <inertia ixx="1.7657563353229885e-06" ixy="0" ixz="0"
+               iyy="6.375349389948617e-06" iyz="0"
+               izz="4.649776514486322e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/LH_THIGH_FOOT.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="LH_THIGH_FOOT_JOINT" type="revolute">
+    <origin xyz="0.022028 0.0026233 -0.12152" rpy="-3.1416 -2.35619 3.1416"/>
+    <parent link="LH_THIGH"/>
+    <child link="LH_THIGH_FOOT"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="LH_TOE">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.002"/>
+      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="LH_TOE_JOINT" type="fixed">
+    <origin rpy="0 0 0" xyz="-0.01 0 -0.116"/>
+    <parent link="LH_THIGH_FOOT"/>
+    <child link="LH_TOE"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════ RH LEG -->
+
+  <link name="RH_HIP">
+    <inertial>
+      <origin xyz="0.03712908 -0.02740818 0.00118127" rpy="0 0 0"/>
+      <mass value="0.09551481"/>
+      <inertia ixx="8.36683846374877e-05" ixy="0" ixz="0"
+               iyy="5.289856462259541e-05" iyz="0"
+               izz="0.00010700081387684817"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.2 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RH_HIP.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.792156 0.819607 0.933333 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RH_HIP_JOINT" type="revolute">
+    <origin xyz="-0.1299 -0.04 0.02425" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="RH_HIP"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RH_THIGH">
+    <inertial>
+      <origin xyz="-0.04407832 0.00162685 -0.02766971" rpy="0 0 0"/>
+      <mass value="0.00716529"/>
+      <inertia ixx="4.108278874534459e-06" ixy="0" ixz="0"
+               iyy="1.2166272442837462e-05" iyz="0"
+               izz="8.535679546948776e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RH_THIGH.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RH_THIGH_JOINT" type="revolute">
+    <origin xyz="0.02775 -0.029523 0.0012724" rpy="-0.11522 0.436332 -0.1069"/>
+    <parent link="RH_HIP"/>
+    <child link="RH_THIGH"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RH_THIGH_FOOT">
+    <inertial>
+      <origin xyz="0.04002067 -0.00341667 -0.02497144" rpy="0 0 0"/>
+      <mass value="0.00294875"/>
+      <inertia ixx="1.7524924876914674e-06" ixy="0" ixz="0"
+               iyy="6.381194355258551e-06" iyz="0"
+               izz="4.6306677015448675e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RH_THIGH_FOOT.STL"/>
+      </geometry>
+      <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="RH_THIGH_FOOT_JOINT" type="revolute">
+    <origin xyz="0.022028 -0.0025833 -0.12152" rpy="3.1416 -2.35619 -3.1416"/>
+    <parent link="RH_THIGH"/>
+    <child link="RH_THIGH_FOOT"/>
+    <dynamics damping="0.01" friction="0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14" upper="3.14" effort="500" velocity="2.5"/>
+  </joint>
+
+  <link name="RH_TOE">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.002"/>
+      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><sphere radius="0.015"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="RH_TOE_JOINT" type="fixed">
+    <origin rpy="0 0 0" xyz="-0.01 0 -0.116"/>
+    <parent link="RH_THIGH_FOOT"/>
+    <child link="RH_TOE"/>
+  </joint>
+
+</robot>
