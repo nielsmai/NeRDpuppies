@@ -1,7 +1,6 @@
 import numpy as np
 import xml.etree.ElementTree as ET
 
-# Path to your URDF
 urdf_path = "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf"
 
 try:
@@ -46,7 +45,7 @@ if len(found_joints) != expected_joints:
 else:
     print(f"Successfully found {len(found_joints)} joints.")
 
-# Print the code block for commons.py
+
 print("\n--- COPY THE BELOW INTO utils/commons.py ---\n")
 
 print("# Pupper V2 Limits extracted from URDF")
