@@ -11,8 +11,8 @@ from envs.warp_sim_envs import Environment, IntegratorType, RenderMode
 
 # --- PUPPER SPECIFIC CONSTANTS ---
 PUPPER_URDF_PATH = "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf"
-PUPPER_DEFAULT_HEIGHT = 0.55 # Adjust based on your URDF leg length
-PUPPER_NUM_CONTACTS = 9  # 4 Feet
+PUPPER_DEFAULT_HEIGHT = 0.4 # Adjust based on your URDF leg length
+PUPPER_NUM_CONTACTS = 4 # 4 Feet
 
 @wp.kernel(enable_backward=False)
 def reset_pupper_dataset(
@@ -42,7 +42,7 @@ def reset_pupper_dataset(
         # ---------------------------------------------------------
         
         # Force Base Z (Index 2) to 0.50 (Safe height)
-        joint_q[env_id * dof_q_per_env + 2] = 0.45
+        joint_q[env_id * dof_q_per_env + 2] = 0.4
         
         # Force Upright Quaternion (Indices 3,4,5,6)
         joint_q[env_id * dof_q_per_env + 3] = 0.0
@@ -91,6 +91,9 @@ def reset_pupper_dataset(
                 joint_qd[env_id * dof_qd_per_env + i] = 0.1 * wp.randf(random_state, -1., 1.)
             for i in range(12): 
                 joint_qd[env_id * dof_qd_per_env + 7 + i] = 0.1 * wp.randf(random_state, -1., 1.)
+
+
+
 class PupperEnvironment(Environment):
     robot_name = "Pupper"
     sim_name = "env_pupper"
@@ -107,16 +110,16 @@ class PupperEnvironment(Environment):
     # Fix Stability: High iterations for small contacts
     sim_substeps_euler = 32
     sim_substeps_featherstone = 10
-    sim_substeps_xpbd = 60  # Increased steps
+    sim_substeps_xpbd = 8   # Increased steps
     handle_collisions_once_per_step = False 
-    xpbd_settings = dict(iterations=100) # High iterations to prevent sinking/exploding
+    xpbd_settings = dict(iterations=30) # High iterations to prevent sinking/exploding
 
     joint_attach_ke: float = 1000.0
     joint_attach_kd: float = 100.0
-    integrator_type = IntegratorType.FEATHERSTONE
-    #integrator_type = IntegratorType.XPBD
+    #integrator_type = IntegratorType.FEATHERSTONE
+    integrator_type = IntegratorType.XPBD
 
-    separate_ground_contacts = True
+    separate_ground_contacts = False
     use_graph_capture = False
     num_envs = 1
     activate_ground_plane = True
@@ -161,7 +164,7 @@ class PupperEnvironment(Environment):
             
         if not os.path.exists(urdf_filename):
             raise FileNotFoundError(f"Pupper URDF not found at {urdf_filename}")
-        builder.default_shape_margin = 0.03
+        builder.default_shape_margin = 0.001
         print(f"DEBUG: Set builder.default_shape_margin to {builder.default_shape_margin}")
         
         # Parse URDF
@@ -171,18 +174,18 @@ class PupperEnvironment(Environment):
             urdf_filename,
             builder,
             floating=True,
-            stiffness=10.0, # Default PD stiffness matching control_gains
-            damping=1.0,     # Damping to prevent jitter
+            stiffness=1000.0, # Default PD stiffness matching control_gains
+            damping=100.0,     # Damping to prevent jitter
             armature=0.1,   
-            contact_ke=2.0e3, # Stiffer contacts to prevent sinking
-            contact_kd=1.0e3,
+            contact_ke=200.0, # Stiffer contacts to prevent sinking
+            contact_kd=500.0,
             contact_kf=1.0e2,
-            contact_mu=0.9, 
+            contact_mu=0.8, 
             limit_ke=1.0e4,
             limit_kd=1.0e2,
             enable_self_collisions=False, 
             collapse_fixed_joints=True,
-            ignore_inertial_definitions=False
+            ignore_inertial_definitions=True
         )
         print(f"DEBUG: After parse_urdf, builder.default_shape_margin is {builder.default_shape_margin}")
         
@@ -337,3 +340,4 @@ class PupperEnvironment(Environment):
             joint_qd=state.joint_qd,
             body_q=state.body_q,
         )
+   
