@@ -9,7 +9,7 @@ import os
 
 wp.init()
 
-print("=== 🎬 Pupper V2: Framework Video Generation ===")
+print("=== Pupper V2: Framework Video Generation ===")
 
 try:
     from envs.neural_environment import NeuralEnvironment
@@ -133,10 +133,10 @@ try:
     # 5. Save
     print("\n[5] Saving Video...")
     renderer.save()
-    print(f"💾 Successfully saved to: {output_file}")
+    print(f"Successfully saved to: {output_file}")
 
     print("\n" + "="*50)
-    print("📺 VIEWING INSTRUCTIONS:")
+    print("VIEWING INSTRUCTIONS:")
     print("="*50)
     print(f"1. Open '{output_file}' in NVIDIA Omniverse Viewer or Blender.")
     print("2. Press 'F' to frame the robot immediately.")
@@ -146,6 +146,6 @@ try:
     env.close()
 
 except Exception as e:
-    print(f"\n💥 ERROR: {e}")
+    print(f"\n ERROR: {e}")
     import traceback
     traceback.print_exc()
