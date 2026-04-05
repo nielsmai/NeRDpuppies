@@ -11,8 +11,8 @@ from envs.warp_sim_envs import Environment, IntegratorType, RenderMode
 
 # --- PUPPER SPECIFIC CONSTANTS ---
 PUPPER_URDF_PATH = "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf"
-PUPPER_DEFAULT_HEIGHT = 0.4 # Adjust based on your URDF leg length
-PUPPER_NUM_CONTACTS = 4 # 4 Feet
+PUPPER_DEFAULT_HEIGHT = 0.3
+PUPPER_NUM_CONTACTS = 4
 
 @wp.kernel(enable_backward=False)
 def reset_pupper_dataset(
@@ -28,23 +28,15 @@ def reset_pupper_dataset(
     joint_qd: wp.array(dtype=wp.float32),
 ):
     env_id = wp.tid()
-    
+
     if reset[env_id]:
-        # 1. Copy defaults first
         for i in range(dof_q_per_env):
             joint_q[env_id * dof_q_per_env + i] = default_joint_q_init[env_id * dof_q_per_env + i]
         for i in range(dof_qd_per_env):
             joint_qd[env_id * dof_qd_per_env + i] = default_joint_qd_init[env_id * dof_qd_per_env + i]
 
-        # ---------------------------------------------------------
-        # CRITICAL FIX: FORCE BASE HEIGHT AND ORIENTATION
-        # Do this BEFORE randomization to ensure a safe baseline
-        # ---------------------------------------------------------
-        
-        # Force Base Z (Index 2) to 0.50 (Safe height)
-        joint_q[env_id * dof_q_per_env + 2] = 0.4
-        
-        # Force Upright Quaternion (Indices 3,4,5,6)
+        # Force safe base height and upright orientation
+        joint_q[env_id * dof_q_per_env + 2] = 0.3
         joint_q[env_id * dof_q_per_env + 3] = 0.0
         joint_q[env_id * dof_q_per_env + 4] = 0.0
         joint_q[env_id * dof_q_per_env + 5] = 0.0
@@ -53,23 +45,18 @@ def reset_pupper_dataset(
         if random_reset:
             random_state = wp.rand_init(seed, env_id)
 
-            # Add SMALL perturbation to the SAFE baseline
-            # X/Y noise ±0.05m
             joint_q[env_id * dof_q_per_env + 0] += wp.randf(random_state, -0.05, 0.05)
             joint_q[env_id * dof_q_per_env + 1] += wp.randf(random_state, -0.05, 0.05)
-            
-            # Z noise ±0.05m (Range will be 0.45 to 0.55)
             joint_q[env_id * dof_q_per_env + 2] += wp.randf(random_state, -0.05, 0.05)
-            
-            # Orientation noise (±0.1 rad)
-            angle = wp.randf(random_state, -1.0, 1.0) * 0.1 
+
+            angle = wp.randf(random_state, -1.0, 1.0) * 0.1
             axis = wp.vec3(
                 wp.randf(random_state, -1.0, 1.0),
                 wp.randf(random_state, -1.0, 1.0),
                 wp.randf(random_state, -1.0, 1.0),
             )
             axis = wp.normalize(axis)
-            
+
             curr_quat = wp.quat(
                 joint_q[env_id * dof_q_per_env + 3],
                 joint_q[env_id * dof_q_per_env + 4],
@@ -78,60 +65,53 @@ def reset_pupper_dataset(
             )
             delta_quat = wp.quat_from_axis_angle(axis, angle)
             new_quat = curr_quat * delta_quat
-            
+
             for i in range(4):
                 joint_q[env_id * dof_q_per_env + 3 + i] = new_quat[i]
 
-            # Small joint noise
             for i in range(12):
                 joint_q[env_id * dof_q_per_env + 7 + i] += wp.randf(random_state, -0.05, 0.05)
 
-            # Tiny velocity noise
-            for i in range(6): 
+            for i in range(6):
                 joint_qd[env_id * dof_qd_per_env + i] = 0.1 * wp.randf(random_state, -1., 1.)
-            for i in range(12): 
+            for i in range(12):
                 joint_qd[env_id * dof_qd_per_env + 7 + i] = 0.1 * wp.randf(random_state, -1., 1.)
-
 
 
 class PupperEnvironment(Environment):
     robot_name = "Pupper"
     sim_name = "env_pupper"
 
-      # --- CRITICAL FIX: Match your stable script ---
-    up_axis = 'z'       # Force Z-Up (Was likely 'y' by default)
-    gravity = (0.0, 0.0, -9.81) # Gravity points down -Z
-    
-    # Fix Visibility: Smaller offset and scaling for a small robot
-    env_offset = (1.5, 0.0, 1.5) 
-    opengl_render_settings = dict(scaling=0.5) # Zoom in closer
-    usd_render_settings = dict(scaling=0.5)    # Zoom in closer
+    up_axis = 'z'
+    gravity = (0.0, 0.0, -9.81)
 
-    # Fix Stability: High iterations for small contacts
+    env_offset = (1.5, 0.0, 1.5)
+    opengl_render_settings = dict(scaling=0.5)
+    usd_render_settings = dict(scaling=0.5)
+
     sim_substeps_euler = 32
-    sim_substeps_featherstone = 10
-    sim_substeps_xpbd = 8   # Increased steps
-    handle_collisions_once_per_step = False 
-    xpbd_settings = dict(iterations=30) # High iterations to prevent sinking/exploding
+    sim_substeps_featherstone = 32 
+    sim_substeps_xpbd = 8
 
-    joint_attach_ke: float = 1000.0
-    joint_attach_kd: float = 100.0
-    #integrator_type = IntegratorType.FEATHERSTONE
-    integrator_type = IntegratorType.XPBD
+    # Mirror Anymal exactly — proven working config in this codebase
+    xpbd_settings = dict(iterations=2)
+    joint_attach_ke: float = 100000.0
+    joint_attach_kd: float = 10.0
 
-    separate_ground_contacts = False
+    # Use Featherstone like Anymal — XPBD contact handling is broken in this framework
+    integrator_type = IntegratorType.FEATHERSTONE
+
+    # This is what makes Anymal work — separate ground contact handling
+    separate_ground_contacts = True
+    handle_collisions_once_per_step = True
+
     use_graph_capture = False
     num_envs = 1
     activate_ground_plane = True
 
-    # Fix Explosion: Moderate Gains (Match your working script's stiffness roughly)
-    # Your script had ke=1000. We use 200-400 here for RL stability.
-    action_strength = 4.0 
+    action_strength = 4.0
     controllable_dofs = np.arange(12)
-    
-    # Uniform gains for simplicity. If unstable, lower to 100.0
-    control_gains = np.array([10.0] * 12) 
-    #control_gains = np.array([200.0] * 12) 
+    control_gains = np.array([400.0] * 12)
     control_limits = [(-1.0, 1.0)] * 12
 
     show_rigid_contact_points = True
@@ -141,10 +121,10 @@ class PupperEnvironment(Environment):
         self,
         seed=42,
         random_reset=True,
-        task="dataset", 
+        task="dataset",
         obs_type="dflex",
         camera_tracking=False,
-        render_mode=RenderMode.USD, # Default to USD for headless
+        render_mode=RenderMode.USD,
         **kwargs
     ):
         self.seed = seed
@@ -152,61 +132,49 @@ class PupperEnvironment(Environment):
         self.obs_type = obs_type
         self.camera_tracking = camera_tracking
         self.task = task
-        # Force render_mode if not passed
+
         if 'render_mode' not in kwargs:
             kwargs['render_mode'] = render_mode
-            
+
         super().__init__(**kwargs)
         self.after_init()
 
     def create_articulation(self, builder):
         urdf_filename = PUPPER_URDF_PATH
-            
+
         if not os.path.exists(urdf_filename):
             raise FileNotFoundError(f"Pupper URDF not found at {urdf_filename}")
-        builder.default_shape_margin = 0.001
-        print(f"DEBUG: Set builder.default_shape_margin to {builder.default_shape_margin}")
-        
-        # Parse URDF
-        # CRITICAL: Do NOT collapse fixed joints if it hides legs. 
-        # But usually collapse_fixed_joints=True is fine for performance.
+
+        # Mirror Anymal's parse_urdf settings as closely as possible
         wp.sim.parse_urdf(
             urdf_filename,
             builder,
             floating=True,
-            stiffness=1000.0, # Default PD stiffness matching control_gains
-            damping=100.0,     # Damping to prevent jitter
-            armature=0.1,   
-            contact_ke=200.0, # Stiffer contacts to prevent sinking
-            contact_kd=500.0,
+            stiffness=10.0,       # same as Anymal
+            damping=1.0,          # same as Anymal
+            armature=0.06,        # same as Anymal
+            contact_ke=5.0e3,     # same as Anymal
+            contact_kd=1.0e3,     # same as Anymal
             contact_kf=1.0e2,
-            contact_mu=0.8, 
-            limit_ke=1.0e4,
-            limit_kd=1.0e2,
-            enable_self_collisions=False, 
-            collapse_fixed_joints=True,
-            ignore_inertial_definitions=True
+            contact_mu=0.75,
+            limit_ke=1.0e3,
+            limit_kd=1.0e1,
+            enable_self_collisions=False,
+            collapse_fixed_joints=False,
+            ignore_inertial_definitions=False,
         )
-        print(f"DEBUG: After parse_urdf, builder.default_shape_margin is {builder.default_shape_margin}")
-        
-        
-        # FIX ORIENTATION: Set Initial Pose Explicitly Upright
-        # Base: x, y, z, qx, qy, qz, qw
-        # Quaternion (0,0,0,1) is Upright (No rotation)
+
+        # Pupper is Z-up, standing pose
         builder.joint_q[:7] = [
-            0.0,
-            0.0,
-            PUPPER_DEFAULT_HEIGHT,
-            0.0, 0.0, 0.0, 1.0, # IDENTITY QUATERNION (Upright)
+            0.0, 0.0, PUPPER_DEFAULT_HEIGHT,
+            0.0, 0.0, 0.0, 1.0,  # identity quaternion — upright in Z-up
         ]
 
-        # Default Joint Angles (Standing Pose)
-        # Ensure these match your URDF's "home" position
         builder.joint_q[7:] = [
             0.0,  0.8, -1.6,  # FL
             0.0,  0.8, -1.6,  # FR
             0.0,  0.8, -1.6,  # RL
-            0.0,  0.8, -1.6   # RR
+            0.0,  0.8, -1.6,  # RR
         ]
 
         for i in range(builder.joint_axis_count):
@@ -222,6 +190,7 @@ class PupperEnvironment(Environment):
         builder.separate_ground_contacts = self.separate_ground_contacts
 
     def after_init(self):
+        # Read only — mirror Anymal's after_init exactly
         self.start_torso_pos = wp.array(
             self.model.joint_q.numpy().reshape(self.num_envs, -1)[:, 0:3].reshape(-1).copy()
         )
@@ -229,19 +198,15 @@ class PupperEnvironment(Environment):
         self.inv_start_rot = wp.quat_inverse(self.start_rot)
         self.basis_vec0 = wp.vec3(1., 0., 0.)
         self.basis_vec1 = wp.vec3(0., 0., 1.)
-    
+
     def reset_envs(self, env_ids: wp.array = None):
-        """Reset using Pupper-specific kernel (Upright)."""
-        
-        # Create mask
         if env_ids is None:
             reset_mask = wp.ones(self.num_envs, dtype=wp.bool, device=self.device)
         else:
             reset_mask = env_ids
 
-        # 1. Launch Reset Kernel (Sets joint_q)
         wp.launch(
-            reset_pupper_dataset, 
+            reset_pupper_dataset,
             dim=self.num_envs,
             inputs=[
                 reset_mask,
@@ -257,64 +222,36 @@ class PupperEnvironment(Environment):
                 self.state.joint_qd,
             ],
             device=self.device,
-        )    
-        
-        # ---------------------------------------------------------
-        # STEP 3 FIX: WARM START THE PHYSICS
-        # ---------------------------------------------------------
-        
-        # A. Update Body Positions from Joint Angles (FK)
-        wp.sim.eval_fk(
-            self.model, 
-            self.state.joint_q, 
-            self.state.joint_qd, 
-            None, 
-            self.state
         )
-        
-        # B. Clear Forces
-        self.state.clear_forces()
-        
-        # C. Run Collision Detection IMMEDIATELY
-        # This pushes feet out of the ground BEFORE the first step
-        wp.sim.collide(self.model, self.state)
-        
-        # D. Update FK again to reflect collision corrections
-        wp.sim.eval_fk(
-            self.model, 
-            self.state.joint_q, 
-            self.state.joint_qd, 
-            None, 
-            self.state
-        )
-        # ---------------------------------------------------------
-
         self.seed += self.num_envs
 
-        # Final sync (redundant but safe)
-        # wp.sim.eval_fk(...) # Already done above
+        # Mirror Anymal's reset — just FK, no manual collide() call needed
+        # with separate_ground_contacts=True the framework handles it
+        wp.sim.eval_fk(
+            self.model,
+            self.state.joint_q,
+            self.state.joint_qd,
+            None,
+            self.state,
+        )
 
     def compute_cost_termination(self, state, control, step, traj_length, cost, terminated):
-        # Simple termination: Fall over or explode
         if not self.uses_generalized_coordinates:
             wp.sim.eval_ik(self.model, state, state.joint_q, state.joint_qd)
-        
-        # Terminate if NaN or too low
-        # (Logic handled by sampler mostly, but good to have here)
         pass
 
     @property
     def observation_dim(self):
         if self.obs_type == "dflex":
-            return 37 
+            return 37
         return self.dof_q_per_env + self.dof_qd_per_env
 
     def compute_observations(self, state, control, observations, step, horizon_length):
         if not self.uses_generalized_coordinates:
             wp.sim.eval_ik(self.model, state, state.joint_q, state.joint_qd)
-        
+
         from envs.warp_sim_envs.env_anymal import compute_observations_anymal_dflex
-        
+
         wp.launch(
             compute_observations_anymal_dflex,
             dim=self.num_envs,
@@ -333,11 +270,9 @@ class PupperEnvironment(Environment):
     def assign_control(self, actions, control, state):
         super().assign_control(actions, control, state)
         self.raw_joint_act = wp.from_torch(wp.to_torch(control.joint_act).clone())
-        
         self.apply_pd_control(
             control_out=control.joint_act,
             joint_q=state.joint_q,
             joint_qd=state.joint_qd,
             body_q=state.body_q,
         )
-   
