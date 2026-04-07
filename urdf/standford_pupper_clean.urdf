@@ -22,8 +22,6 @@
     </collision>
   </link>
 
-  <!-- ═══════════════════════════════════════════════════════ LF LEG -->
-
   <link name="LF_HIP">
     <inertial>
       <origin xyz="0.03672908 0.02740814 0.00118127" rpy="0 0 0"/>
@@ -39,7 +37,6 @@
       </geometry>
       <material name=""><color rgba="0.972549 0.968627 0.929411 1"/></material>
     </visual>
-    <!-- no collision — not needed for locomotion training -->
   </link>
 
   <joint name="LF_HIP_JOINT" type="revolute">
@@ -54,10 +51,7 @@
   <link name="LF_THIGH">
     <inertial>
       <origin xyz="-0.04486232 -0.00163039 -0.02816178" rpy="0 0 0"/>
-      <mass value="0.00699575"/>
-      <inertia ixx="4.011071699334492e-06" ixy="0" ixz="0"
-               iyy="1.1878402750199946e-05" iyz="0"
-               izz="8.333714363349829e-06"/>
+      <mass value="0.04"/> <inertia ixx="2.0e-05" ixy="0" ixz="0" iyy="6.0e-05" iyz="0" izz="4.0e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -66,7 +60,6 @@
       </geometry>
       <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
     </visual>
-    <!-- no collision -->
   </link>
 
   <joint name="LF_THIGH_JOINT" type="revolute">
@@ -81,10 +74,7 @@
   <link name="LF_THIGH_FOOT">
     <inertial>
       <origin xyz="0.04002073 0.00580157 -0.02456342" rpy="0 0 0"/>
-      <mass value="0.00294875"/>
-      <inertia ixx="1.7657563311842582e-06" ixy="0" ixz="0"
-               iyy="6.375349389948617e-06" iyz="0"
-               izz="4.649776510347592e-06"/>
+      <mass value="0.03"/> <inertia ixx="1.5e-05" ixy="0" ixz="0" iyy="5.0e-05" iyz="0" izz="3.5e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -93,7 +83,6 @@
       </geometry>
       <material name=""><color rgba="0.098039 0.098039 0.098039 1"/></material>
     </visual>
-    <!-- no collision -->
   </link>
 
   <joint name="LF_THIGH_FOOT_JOINT" type="revolute">
@@ -108,8 +97,8 @@
   <link name="LF_TOE">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.002"/>
-      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+      <mass value="0.05"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -126,8 +115,6 @@
     <parent link="LF_THIGH_FOOT"/>
     <child link="LF_TOE"/>
   </joint>
-
-  <!-- ═══════════════════════════════════════════════════════ RF LEG -->
 
   <link name="RF_HIP">
     <inertial>
@@ -158,10 +145,7 @@
   <link name="RF_THIGH">
     <inertial>
       <origin xyz="-0.04407832 -0.00075984 -0.02770708" rpy="0 0 0"/>
-      <mass value="0.00716529"/>
-      <inertia ixx="4.19386946486895e-06" ixy="0" ixz="0"
-               iyy="1.2104016236055651e-05" iyz="0"
-               izz="8.683526344065076e-06"/>
+      <mass value="0.04"/> <inertia ixx="2.0e-05" ixy="0" ixz="0" iyy="6.0e-05" iyz="0" izz="4.0e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -184,10 +168,7 @@
   <link name="RF_THIGH_FOOT">
     <inertial>
       <origin xyz="0.04002067 -0.00366667 -0.02497144" rpy="0 0 0"/>
-      <mass value="0.00294875"/>
-      <inertia ixx="1.7524924876914674e-06" ixy="0" ixz="0"
-               iyy="6.381194355258551e-06" iyz="0"
-               izz="4.6306677015448675e-06"/>
+      <mass value="0.03"/> <inertia ixx="1.5e-05" ixy="0" ixz="0" iyy="5.0e-05" iyz="0" izz="3.5e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -210,8 +191,8 @@
   <link name="RF_TOE">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.002"/>
-      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+      <mass value="0.05"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -228,8 +209,6 @@
     <parent link="RF_THIGH_FOOT"/>
     <child link="RF_TOE"/>
   </joint>
-
-  <!-- ═══════════════════════════════════════════════════════ LH LEG -->
 
   <link name="LH_HIP">
     <inertial>
@@ -260,10 +239,7 @@
   <link name="LH_THIGH">
     <inertial>
       <origin xyz="-0.04407853 -0.00162684 -0.02766984" rpy="0 0 0"/>
-      <mass value="0.00716530"/>
-      <inertia ixx="4.108284608117991e-06" ixy="0" ixz="0"
-               iyy="1.2166289422293203e-05" iyz="0"
-               izz="8.53569145948762e-06"/>
+      <mass value="0.04"/> <inertia ixx="2.0e-05" ixy="0" ixz="0" iyy="6.0e-05" iyz="0" izz="4.0e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -286,10 +262,7 @@
   <link name="LH_THIGH_FOOT">
     <inertial>
       <origin xyz="0.04002073 0.00551265 -0.02458837" rpy="0 0 0"/>
-      <mass value="0.00294875"/>
-      <inertia ixx="1.7657563353229885e-06" ixy="0" ixz="0"
-               iyy="6.375349389948617e-06" iyz="0"
-               izz="4.649776514486322e-06"/>
+      <mass value="0.03"/> <inertia ixx="1.5e-05" ixy="0" ixz="0" iyy="5.0e-05" iyz="0" izz="3.5e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -312,8 +285,8 @@
   <link name="LH_TOE">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.002"/>
-      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+      <mass value="0.05"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -331,8 +304,6 @@
     <child link="LH_TOE"/>
   </joint>
 
-  <!-- ═══════════════════════════════════════════════════════ RH LEG -->
-
   <link name="RH_HIP">
     <inertial>
       <origin xyz="0.03712908 -0.02740818 0.00118127" rpy="0 0 0"/>
@@ -342,8 +313,7 @@
                izz="0.00010700081387684817"/>
     </inertial>
     <visual>
-      <origin xyz="0.2 0 0" rpy="0 0 0"/>
-      <geometry>
+      <origin xyz="0.2 0 0" rpy="0 0 0"/> <geometry>
         <mesh filename="/teamspace/studios/this_studio/urdf/meshes/RH_HIP.STL"/>
       </geometry>
       <material name=""><color rgba="0.792156 0.819607 0.933333 1"/></material>
@@ -362,10 +332,7 @@
   <link name="RH_THIGH">
     <inertial>
       <origin xyz="-0.04407832 0.00162685 -0.02766971" rpy="0 0 0"/>
-      <mass value="0.00716529"/>
-      <inertia ixx="4.108278874534459e-06" ixy="0" ixz="0"
-               iyy="1.2166272442837462e-05" iyz="0"
-               izz="8.535679546948776e-06"/>
+      <mass value="0.04"/> <inertia ixx="2.0e-05" ixy="0" ixz="0" iyy="6.0e-05" iyz="0" izz="4.0e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -388,10 +355,7 @@
   <link name="RH_THIGH_FOOT">
     <inertial>
       <origin xyz="0.04002067 -0.00341667 -0.02497144" rpy="0 0 0"/>
-      <mass value="0.00294875"/>
-      <inertia ixx="1.7524924876914674e-06" ixy="0" ixz="0"
-               iyy="6.381194355258551e-06" iyz="0"
-               izz="4.6306677015448675e-06"/>
+      <mass value="0.03"/> <inertia ixx="1.5e-05" ixy="0" ixz="0" iyy="5.0e-05" iyz="0" izz="3.5e-05"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -414,8 +378,8 @@
   <link name="RH_TOE">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.002"/>
-      <inertia ixx="2e-08" ixy="0" ixz="0" iyy="2e-08" iyz="0" izz="2e-08"/>
+      <mass value="0.05"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
