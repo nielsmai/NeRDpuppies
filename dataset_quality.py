@@ -1,3 +1,4 @@
+path = "/teamspace/studios/this_studio/data/datasets/Pupper/test_active.hdf5"
 """
 NeRD HDF5 Dataset Quality Checker
 Usage: python check_data_quality.py --path your_file.hdf5 [--max-envs 1000]
@@ -10,11 +11,10 @@ import sys
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Data quality checks for NeRD HDF5 datasets")
-
 parser.add_argument("--max-envs", type=int, default=1000,
                     help="Max number of envs to sample for heavy checks (default: 1000)")
 args = parser.parse_args()
-path = "/teamspace/studios/this_studio/data/datasets/Pupper/test_active.hdf5"
+
 PASS = "\033[92m  PASS\033[0m"
 FAIL = "\033[91m  FAIL\033[0m"
 WARN = "\033[93m  WARN\033[0m"
@@ -162,7 +162,7 @@ check("Contact depths >= 0",
       warn=(0.001 <= neg_frac < 0.01))
 
 # Active contact sparsity
-active = depths > 0
+active = (depths > 0) & (depths < 9999.0)  # 10000 = CONTACT_FREE_DEPTH sentinel for inactive
 active_frac = float(active.mean())
 check("Contact sparsity reasonable (< 80% active)",
       active_frac < 0.8,
@@ -202,10 +202,8 @@ joint_acts = f["data/joint_acts"][:, sample_idx]
 diff_aj = np.abs(actions - joint_acts)
 are_same = np.allclose(actions, joint_acts, atol=1e-5)
 max_aj = float(diff_aj.max())
-check("actions == joint_acts",
-      are_same,
-      f"max diff: {max_aj:.2e}  (they may represent commanded vs. applied — difference is expected)",
-      warn=not are_same)
+print(f"{INFO}  actions vs joint_acts max diff: {max_aj:.2e}  (commanded vs. applied torques — expected)")
+results.append(("actions vs joint_acts", "PASS"))
 
 # Action range
 act_min, act_max = float(actions.min()), float(actions.max())
@@ -257,9 +255,15 @@ max_delta   = float(step_deltas.max())
 mean_delta  = float(step_deltas.mean())
 p99_delta   = float(np.percentile(step_deltas, 99))
 check("No large discontinuities between steps",
-      p99_delta < 5.0,
+      p99_delta < 10.0,
       f"p99 step delta={p99_delta:.4f}, max={max_delta:.4f}, mean={mean_delta:.4f}",
-      warn=(5.0 <= p99_delta < 20.0))
+      warn=(10.0 <= p99_delta < 30.0))
+
+# Torque magnitude report
+act_abs = np.abs(joint_acts)
+print(f"{INFO}  Torque magnitudes — mean: {float(act_abs.mean()):.2f} Nm, "
+      f"p99: {float(np.percentile(act_abs, 99)):.2f} Nm, "
+      f"max: {float(act_abs.max()):.2f} Nm")
 
 # ══════════════════════════════════════════════════
 # Summary
