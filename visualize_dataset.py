@@ -1,88 +1,60 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-# SPDX-License-Identifier: Apache-2.0
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-import sys, os
-base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
-sys.path.append(base_dir)
-
-import argparse
+import os
 import h5py
 import numpy as np
-import torch
+import warp as wp
+import warp.sim as wp_sim
+import warp.sim.render
 
-from envs.neural_environment import NeuralEnvironment
-from utils import warp_utils
+# 0. Initialize
+wp.init()
+device = "cuda" if wp.is_cuda_available() else "cpu"
 
-def visualize_dataset(dataset_path, num_envs, num_transitions):
-    dataset = h5py.File(dataset_path, 'r', swmr=True, libver='latest')
-    env_name = dataset['data'].attrs['env']
-    total_transitions = dataset['data'].attrs['total_transitions']
-    print('total transitions = ', total_transitions)
+# 1. Setup Model
+# We use collapse_fixed_joints=True to match your 12-joint dataset
+builder = wp_sim.ModelBuilder(up_vector=(0.0, 0.0, 1.0))
+wp_sim.parse_urdf(
+    "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf", 
+    builder, 
+    floating=True,
+    collapse_fixed_joints=True 
+)
 
-    # create neural env
-    env = NeuralEnvironment(
-        env_name = env_name,
-        num_envs = num_envs,
-        warp_env_cfg = {},
-        neural_integrator_cfg = {},
-        neural_model = None,
-        default_env_mode = "ground-truth",
-        render = True
-    )
+model = builder.finalize(device)
+model.ground = True # Turn off ground to prevent playback jitter
 
-    # load datase
-    states = dataset['data']['states'][()].astype('float32').transpose(1, 0, 2)
-    states = states.reshape(-1, states.shape[-1])
-    next_states = dataset['data']['next_states'][()].astype('float32').transpose(1, 0, 2)
-    next_states = next_states.reshape(-1, next_states.shape[-1])
+# 2. Setup State and Load Data
+state_in = model.state()
 
-    # visualize
-    # reshape states and next_states to be (num_envs, total_transitions / num_envs, dofs)
-    total_transitions = total_transitions // num_envs * num_envs
-    states = torch.tensor(
-                states[:total_transitions, :].reshape(num_envs, -1, states.shape[-1]), 
-                device = warp_utils.device_to_torch(env.device))
-    next_states = torch.tensor(
-                    next_states[:total_transitions, :].reshape(num_envs, -1, next_states.shape[-1]), 
-                    device = warp_utils.device_to_torch(env.device))
+DATASET_PATH = "/teamspace/studios/this_studio/data/datasets/Pupper/test_active.hdf5"
+with h5py.File(DATASET_PATH, 'r') as f:
+    # Get first trajectory: [100 frames, 1 robot, 37 dims]
+    traj_data = f['data']['states'][:, 0, :].astype(np.float32)
 
-    min_vel, max_vel = np.inf, -np.inf
-    for step in range(min(num_transitions, states.shape[1])):
-        env.reset(initial_states = states[:, step, :])
-        env.render()
-    print('Min vel = {}, Max vel = {}'.format(min_vel, max_vel))
+# 3. Setup Renderer
+renderer = wp_sim.render.SimRenderer(model, "outputs/dataset_playback.usd", fps=60)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset-path', 
-                        type=str,
-                        required=True,
-                        help='Path to the dataset.')
-    parser.add_argument('--num-transitions',
-                        type=int,
-                        default=1000,
-                        help='Number of transitions to be visualized.')
-    parser.add_argument('--num-envs',
-                        type=int,
-                        default=10,
-                        help='The number of parallel environments.')
+# 4. Playback Loop
+print(f"🎬 Playing back {len(traj_data)} frames from dataset...")
+
+for i in range(len(traj_data)):
+    # Extract the first 19 values: [Pos(3), Quat(4), Joints(12)]
+    q_frame = traj_data[i, :19]
     
-    args = parser.parse_args()
+    # Optional: Force height if the data is "floating" or "sinking"
+    q_frame[2] = 0.25 
+    
+    # Manually assign the dataset pose to the state
+    state_in.joint_q.assign(q_frame)
+    state_in.joint_qd.zero_() # No velocity needed for pure playback
+    
+    # CRITICAL: Forward Kinematics updates the body parts based on joint_q
+    # Without this, the legs won't move in the render
+    wp.sim.eval_fk(model, state_in.joint_q, state_in.joint_qd, None, state_in)
+    
+    # Render
+    renderer.begin_frame(i * (1.0/60.0))
+    renderer.render(state_in)
+    renderer.end_frame()
 
-    visualize_dataset(
-        dataset_path = args.dataset_path,
-        num_envs = args.num_envs,
-        num_transitions = args.num_transitions
-    )
+renderer.save()
+print("✅ Done! Check outputs/dataset_playback.usd")
