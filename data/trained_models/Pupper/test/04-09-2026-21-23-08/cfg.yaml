@@ -1,0 +1,81 @@
+algorithm:
+  batch_size: 512
+  dataset:
+    max_capacity: 100000000
+    num_data_workers: 4
+    train_dataset_path: /outputs/Pupper/pupper_dataset.hdf5
+    valid_datasets:
+      exp_trajectory: /outputs/Pupper/pupper_dataset.hdf5
+  eval:
+    dataset_path: /outputs/Pupper/pupper_dataset.hdf5
+    mode: dataset
+    num_rollouts: 2048
+    passive: false
+    rollout_horizon: 10
+  grad_norm: 1.0
+  name: SequenceModelTrainer
+  num_epochs: 1000
+  num_iters_per_epoch: 5000
+  num_valid_batches: 100
+  optimizer:
+    lr_end: 1e-4
+    lr_schedule: linear
+    lr_start: 1e-3
+  sample_sequence_length: 10
+  seed: 0
+  truncate_grad: true
+cli:
+  cfg: cfg/Pupper/transformer.yaml
+  cfg_overrides: ''
+  checkpoint: null
+  device: cuda:0
+  eval_interval: 1
+  log_interval: 1
+  logdir: ../../data/trained_models/Pupper/test/04-09-2026-21-23-08
+  no_time_stamp: false
+  render: false
+  save_interval: 50
+  test: false
+  train: true
+env:
+  env_name: Pupper
+  neural_integrator_cfg:
+    anchor_frame_step: every
+    name: TransformerNeuralIntegrator
+    num_states_history: 10
+    orientation_prediction_parameterization: quaternion
+    prediction_type: relative
+    states_embedding_type: identical
+    states_frame: body
+  num_envs: 512
+  render: false
+inputs:
+  low_dim:
+  - states_embedding
+  - contact_normals
+  - contact_points_1
+  - contact_depths
+  - joint_acts
+  - gravity_dir
+network:
+  encoder:
+    low_dim:
+      activation: relu
+      layer_sizes: []
+      layernorm: false
+  model:
+    mlp:
+      activation: relu
+      layer_sizes:
+      - 64
+      layernorm: false
+    output_tanh: false
+  normalize_input: true
+  normalize_output: true
+  transformer:
+    bias: false
+    block_size: 32
+    dropout: 0.0
+    n_embd: 384
+    n_head: 12
+    n_layer: 6
