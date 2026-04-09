@@ -27,6 +27,7 @@ MIN_CONTACT_EVENT_THRESHOLD = 0.12
 # [TESTING]
 # MIN_CONTACT_EVENT_THRESHOLD = 0.02
 
+#add a field for pupper everywhere
 JOINT_Q_MIN = {
     'Cartpole': np.array([-3.5, -np.pi]),
     'Pendulum': -np.pi,
@@ -48,7 +49,13 @@ JOINT_Q_MIN = {
                 -0.72, -np.pi, -np.pi,
                 -0.49, -np.pi, -np.pi,
                 -0.72, -np.pi, -np.pi
-            ])
+            ]),
+    'Pupper': np.array([
+                -0.5000, -3.1400, -3.1400,  # FL
+                -0.5000, -3.1400, -3.1400,  # FR
+                -0.5000, -3.1400, -3.1400,  # RL
+                -0.5000, -3.1400, -3.1400,  # RR
+            ], dtype=np.float32)
 }
 
 JOINT_Q_MAX = {
@@ -72,7 +79,13 @@ JOINT_Q_MAX = {
                 0.49, -np.pi, -np.pi,
                 0.72, -np.pi, -np.pi,
                 0.49, -np.pi, -np.pi
-            ])
+            ]),
+    'Pupper': np.array([
+                0.5000, 3.1400, 3.1400,     # FL
+                0.5000, 3.1400, 3.1400,     # FR
+                0.5000, 3.1400, 3.1400,     # RL
+                0.5000, 3.1400, 3.1400      # RR
+            ], dtype=np.float32)
 }
 
 JOINT_QD_MIN = {
@@ -95,7 +108,8 @@ JOINT_QD_MIN = {
                 np.pi * 2., np.pi * 2., np.pi * 2.,
                 np.pi * 2., np.pi * 2., np.pi * 2.,
                 np.pi * 2., np.pi * 2., np.pi * 2.,
-            ])
+            ]),
+    'Pupper': -2.50 * np.ones(12, dtype=np.float32)
 }
 
 JOINT_QD_MAX = {
@@ -119,7 +133,8 @@ JOINT_QD_MAX = {
                 np.pi * 2., np.pi * 2., np.pi * 2.,
                 np.pi * 2., np.pi * 2., np.pi * 2.,
                 np.pi * 2., np.pi * 2., np.pi * 2.,
-            ])
+            ]),
+    'Pupper': 2.50 * np.ones(12, dtype=np.float32)
 }
 
 JOINT_ACT_SCALE = {
@@ -141,5 +156,11 @@ JOINT_ACT_SCALE = {
             50.0,  # RH_HAA
             40.0,  # RH_HFE
             8.0,  # RH_KFE
-        ])
+        ]),
+    'Pupper': np.array([
+        4.0, 4.0, 4.0,  # Leg 1 (LF)
+        4.0, 4.0, 4.0,  # Leg 2 (RF)
+        4.0, 4.0, 4.0,  # Leg 3 (LH)
+        4.0, 4.0, 4.0   # Leg 4 (RH)
+    ], dtype=np.float32)
 }

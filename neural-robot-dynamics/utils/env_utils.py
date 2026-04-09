@@ -31,8 +31,8 @@ ENV_CLS = {
     "Ant": getattr(warp_sim_envs, "AntEnvironment", None),
     "CubeToss": getattr(warp_sim_envs, "CubeTossingEnvironment", None),
     "Anymal": getattr(warp_sim_envs, "AnymalEnvironment", None),
-    "AnymalJointPositionControl": getattr(warp_sim_envs, "AnymalJointPositionControlEnvironment", None),
     "Pupper": getattr(warp_sim_envs, "PupperEnvironment", None),
+    "AnymalJointPositionControl": getattr(warp_sim_envs, "AnymalJointPositionControlEnvironment", None),
 }
 
 def create_abstract_contact_env(
