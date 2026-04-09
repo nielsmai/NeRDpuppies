@@ -109,9 +109,9 @@ class PupperEnvironment(Environment):
     num_envs = 1
     activate_ground_plane = True
 
-    action_strength = 4.0
+    action_strength = 1.0
     controllable_dofs = np.arange(12)
-    control_gains = np.array([400.0] * 12)
+    control_gains = np.array([5.0] * 12)
     control_limits = [(-1.0, 1.0)] * 12
 
     show_rigid_contact_points = True
