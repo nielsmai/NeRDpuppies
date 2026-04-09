@@ -2,6 +2,20 @@ import warp as wp
 import warp.sim as wp_sim
 import warp.sim.render
 import numpy as np
+import os
+import glob
+
+def get_next_run_path(output_dir="outputs", prefix="stable_box", ext="usd"):
+    os.makedirs(output_dir, exist_ok=True)
+    existing = glob.glob(os.path.join(output_dir, f"{prefix}_*.{ext}"))
+    nums = []
+    for f in existing:
+        stem = os.path.splitext(os.path.basename(f))[0]
+        suffix = stem.removeprefix(f"{prefix}_")
+        if suffix.isdigit():
+            nums.append(int(suffix))
+    next_nums = max(nums, default=0) + 1
+    return os.path.join(output_dir, f"{prefix}_{next_nums:03d}.{ext}")
 
 # 0. Initialize
 wp.init()
@@ -12,7 +26,8 @@ builder = wp_sim.ModelBuilder(up_vector=(0.0, 0.0, 1.0))
 builder.default_shape_margin = 0.001  # Smaller margin for stability
 
 # Load your simplified box URDF
-wp_sim.parse_urdf("urdf/standford_pupper.urdf", builder, floating=True)
+builder.add_body()
+wp_sim.parse_urdf("urdf/standford_pupper_clean.urdf", builder, floating=True)
 
 model = builder.finalize(device)
 model.ground = True
@@ -45,7 +60,8 @@ state_in.body_qd.zero_() # Ensure zero initial velocity
 
 # 3. Simulation Settings
 integrator = wp_sim.XPBDIntegrator(iterations=30) # More iterations = more stable
-renderer = wp_sim.render.SimRenderer(model, "outputs/stable_box.usd", fps=60)
+output_path = get_next_run_path()
+renderer = wp_sim.render.SimRenderer(model, output_path, fps=60)
 
 # 4. Simulation Loop
 dt = 1.0 / 120.0 # Standard simulation step
@@ -71,4 +87,4 @@ for i in range(200):
     renderer.end_frame()
 
 renderer.save()
-print("Done! Check outputs/stable_box.usd")
+print(f"Done! Check {output_path}")

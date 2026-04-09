@@ -10,7 +10,7 @@ import numpy as np
 from envs.warp_sim_envs import Environment, IntegratorType, RenderMode
 
 # --- PUPPER SPECIFIC CONSTANTS ---
-PUPPER_URDF_PATH = "/teamspace/studios/this_studio/urdf/standford_pupper_clean.urdf"
+PUPPER_URDF_PATH = "urdf/standford_pupper_clean.urdf"
 PUPPER_DEFAULT_HEIGHT = 0.3
 PUPPER_NUM_CONTACTS = 4
 
@@ -160,7 +160,7 @@ class PupperEnvironment(Environment):
             limit_ke=1.0e3,
             limit_kd=1.0e1,
             enable_self_collisions=False,
-            collapse_fixed_joints=False,
+            collapse_fixed_joints=True,
             ignore_inertial_definitions=False,
         )
 

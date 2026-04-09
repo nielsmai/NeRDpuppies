@@ -1,6 +1,19 @@
 <?xml version="1.0"?>
 <!-- created with Phobos 1.0.1 "Capricious Choutengan" -->
   <robot name="pupper_v2_dji">
+      <link name="pupper_v2_dji_chassis">
+      <inertial>
+        <origin xyz="0 -0.048 -0.00964" rpy="0 0 0"/>
+        <mass value="0.991"/>
+        <inertia ixx="0.00626" ixy="2e-05" ixz="0" iyy="0.00175" iyz="2e-05" izz="0.00678"/>
+      </inertial>
+      <collision name="Cube">
+        <origin xyz="0 0.1 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="meshes/Cube.003.obj" scale="1.0 1.0 1.0"/>
+        </geometry>
+      </collision>
+    </link>
 
     <link name="leftFrontLeg">
       <inertial>
@@ -110,20 +123,6 @@
         <origin xyz="0.0169 0 -0.08" rpy="1.5708 0 1.5708"/>
         <geometry>
           <cylinder radius="0.015" length="0.065"/>
-        </geometry>
-      </collision>
-    </link>
-
-    <link name="pupper_v2_dji_chassis">
-      <inertial>
-        <origin xyz="0 -0.048 -0.00964" rpy="0 0 0"/>
-        <mass value="0.991"/>
-        <inertia ixx="0.00626" ixy="2e-05" ixz="0" iyy="0.00175" iyz="2e-05" izz="0.00678"/>
-      </inertial>
-      <collision name="Cube">
-        <origin xyz="0 0.1 0" rpy="0 0 0"/>
-        <geometry>
-          <mesh filename="meshes/Cube.003.obj" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
