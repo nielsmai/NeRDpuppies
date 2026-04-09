@@ -6,8 +6,27 @@ import warp.sim.render
 import torch
 import numpy as np
 import os
+import glob
 
 wp.init()
+
+# Auto-Incrementing Output Path Function
+def get_next_run_path(output_dir="outputs", prefix="pupper_framework_demo", ext="usd"):
+    os.makedirs(output_dir, exist_ok=True)
+    existing = glob.glob(os.path.join(output_dir, f"{prefix}_*.{ext}"))
+    nums = []
+    for f in existing:
+        stem = os.path.splitext(os.path.basename(f))[0]
+
+        if stem.startswith(prefix + "_"):
+            suffix = stem[len(prefix) + 1:]
+        else:
+            suffix = stem
+        if suffix.isdigit():
+            nums.append(int(suffix))
+            
+    next_num = max(nums, default=0) + 1
+    return os.path.join(output_dir, f"{prefix}_{next_num:03d}.{ext}")
 
 print("=== Pupper V2: Framework Video Generation ===")
 
@@ -53,8 +72,7 @@ try:
 
     # 3. Attach Renderer
     print("\n[3] Attaching Manual Renderer...")
-    output_file = "outputs/pupper_framework_demo.usd"
-    os.makedirs("outputs", exist_ok=True)
+    output_file = get_next_run_path(prefix="pupper_framework_demo")
     renderer = wp_sim.render.SimRenderer(
         env.env.model,
         output_file,
