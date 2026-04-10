@@ -11,10 +11,12 @@ import sys
 # ── CLI ────────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Data quality checks for NeRD HDF5 datasets")
 
+parser.add_argument("--path", type=str, required=True,
+                    help="Path to the dataset file to check")
 parser.add_argument("--max-envs", type=int, default=1000,
                     help="Max number of envs to sample for heavy checks (default: 1000)")
 args = parser.parse_args()
-path = "/data/datasets/Pupper/dataset.hdf5"
+path = args.path
 PASS = "\033[92m  PASS\033[0m"
 FAIL = "\033[91m  FAIL\033[0m"
 WARN = "\033[93m  WARN\033[0m"
