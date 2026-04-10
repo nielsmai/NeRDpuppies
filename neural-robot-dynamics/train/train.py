@@ -58,6 +58,10 @@ if __name__ == '__main__':
         time_stamp = get_time_stamp()
         args.logdir = os.path.join(args.logdir, time_stamp)
         
+        # update wandb name with timestamp
+        if 'wandb' in cfg and cfg['wandb'].get('enabled', False):
+            cfg['wandb']['name'] = f"{cfg['wandb']['name']}-{time_stamp}"
+        
     # cfg parameter overwrite
     if args.num_envs is not None:
         cfg['env']['num_envs'] = args.num_envs

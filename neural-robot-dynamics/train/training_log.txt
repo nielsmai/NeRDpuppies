@@ -1,0 +1,92 @@
+Warp CUDA error: Failed to get driver entry point 'cuDeviceGetUuid' (CUDA error 1)
+Warp CUDA error: Function cuDeviceGetUuid_f: a suitable driver entry point was not found
+Warp CUDA error 36: API call is not supported in the installed CUDA driver (in function cuda_init, /builds/omniverse/warp/warp/native/warp.cu:284)
+/usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (2.2.3) or chardet (3.0.4) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
+Warp DeprecationWarning: The `warp.sim` module is deprecated and will be removed in v1.10. Please transition to using the forthcoming Newton library instead.
+Warp UserWarning: Python 3.9 or newer is recommended for running Warp, detected sys.version_info(major=3, minor=8, micro=10, releaselevel='final', serial=0)
+Warp 1.8.0 initialized:
+   CUDA Toolkit 12.8, Driver 13.1
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 4070" (12 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /root/.cache/warp/1.8.0
+[96m [NeuralEnvironment] Creating abstract contact environment: Pupper. [0m
+Module warp.sim.inertia 4136106 load on device 'cuda:0' took 2.36 ms  (cached)
+Creating 512 environments:   0%|          | 0/512 [00:00<?, ?it/s]Creating 512 environments:   3%|▎         | 15/512 [00:00<00:03, 143.73it/s]Creating 512 environments:   6%|▌         | 30/512 [00:00<00:03, 146.01it/s]Creating 512 environments:   9%|▉         | 45/512 [00:00<00:03, 146.59it/s]Creating 512 environments:  12%|█▏        | 60/512 [00:00<00:03, 144.70it/s]Creating 512 environments:  15%|█▍        | 75/512 [00:00<00:03, 145.45it/s]Creating 512 environments:  18%|█▊        | 90/512 [00:00<00:02, 145.63it/s]Creating 512 environments:  21%|██        | 105/512 [00:00<00:02, 146.29it/s]Creating 512 environments:  23%|██▎       | 120/512 [00:00<00:02, 145.63it/s]Creating 512 environments:  26%|██▋       | 135/512 [00:00<00:02, 142.95it/s]Creating 512 environments:  29%|██▉       | 150/512 [00:01<00:02, 142.16it/s]Creating 512 environments:  32%|███▏      | 165/512 [00:01<00:02, 143.62it/s]Creating 512 environments:  35%|███▌      | 180/512 [00:01<00:02, 144.57it/s]Creating 512 environments:  38%|███▊      | 195/512 [00:01<00:02, 145.53it/s]Creating 512 environments:  41%|████      | 210/512 [00:01<00:02, 146.31it/s]Creating 512 environments:  44%|████▍     | 225/512 [00:01<00:01, 146.49it/s]Creating 512 environments:  47%|████▋     | 240/512 [00:01<00:01, 146.14it/s]Creating 512 environments:  50%|████▉     | 255/512 [00:01<00:01, 146.08it/s]Creating 512 environments:  53%|█████▎    | 270/512 [00:01<00:01, 145.59it/s]Creating 512 environments:  56%|█████▌    | 285/512 [00:01<00:01, 146.27it/s]Creating 512 environments:  59%|█████▊    | 300/512 [00:02<00:01, 145.67it/s]Creating 512 environments:  62%|██████▏   | 316/512 [00:02<00:01, 147.51it/s]Creating 512 environments:  65%|██████▍   | 331/512 [00:02<00:01, 147.16it/s]Creating 512 environments:  68%|██████▊   | 346/512 [00:02<00:01, 146.96it/s]Creating 512 environments:  71%|███████   | 361/512 [00:02<00:01, 147.16it/s]Creating 512 environments:  73%|███████▎  | 376/512 [00:02<00:00, 147.10it/s]Creating 512 environments:  76%|███████▋  | 391/512 [00:02<00:00, 146.70it/s]Creating 512 environments:  79%|███████▉  | 406/512 [00:02<00:00, 138.70it/s]Creating 512 environments:  82%|████████▏ | 420/512 [00:02<00:00, 136.40it/s]Creating 512 environments:  85%|████████▍ | 434/512 [00:03<00:00, 137.20it/s]Creating 512 environments:  88%|████████▊ | 449/512 [00:03<00:00, 139.44it/s]Creating 512 environments:  91%|█████████ | 464/512 [00:03<00:00, 141.56it/s]Creating 512 environments:  94%|█████████▍| 480/512 [00:03<00:00, 144.11it/s]Creating 512 environments:  97%|█████████▋| 495/512 [00:03<00:00, 145.14it/s]Creating 512 environments: 100%|█████████▉| 510/512 [00:03<00:00, 143.91it/s]Creating 512 environments: 100%|██████████| 512/512 [00:03<00:00, 144.39it/s]
+Module warp.sim.collide 3b78b77 load on device 'cuda:0' took 8.35 ms  (cached)
+Module warp.sim.integrator_featherstone 18b3327 load on device 'cuda:0' took 6.08 ms  (cached)
+Module envs.abstract_contact_environment 8e8d790 load on device 'cuda:0' took 0.99 ms  (cached)
+Module integrators.integrator_neural ee402cd load on device 'cuda:0' took 2.00 ms  (cached)
+[91m [NeuralEnvironment] Created a DUMMY Neural Integrator. [0m
+number of parameters: 10.93M
+Model = 
+ ModelMixedInput(
+  (encoders): ModuleDict(
+    (low_dim): MLPBase(
+      (body): Sequential()
+    )
+  )
+  (transformer_model): GPT(
+    (transformer): ModuleDict(
+      (wte): Linear(in_features=423, out_features=384, bias=True)
+      (wpe): Embedding(32, 384)
+      (drop): Dropout(p=0.0, inplace=False)
+      (h): ModuleList(
+        (0-5): 6 x Block(
+          (ln_1): LayerNorm()
+          (attn): CausalSelfAttention(
+            (c_attn): Linear(in_features=384, out_features=1152, bias=False)
+            (c_proj): Linear(in_features=384, out_features=384, bias=False)
+            (attn_dropout): Dropout(p=0.0, inplace=False)
+            (resid_dropout): Dropout(p=0.0, inplace=False)
+          )
+          (ln_2): LayerNorm()
+          (mlp): MLP(
+            (c_fc): Linear(in_features=384, out_features=1536, bias=False)
+            (gelu): GELU(approximate='none')
+            (c_proj): Linear(in_features=1536, out_features=384, bias=False)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+        )
+      )
+      (ln_f): LayerNorm()
+    )
+    (lm_head): Linear(in_features=384, out_features=384, bias=False)
+  )
+  (model): MLPDeterministic(
+    (feature_net): MLPBase(
+      (body): Sequential(
+        (0): Linear(in_features=384, out_features=64, bias=True)
+        (1): ReLU()
+      )
+    )
+    (output_net): Linear(in_features=64, out_features=37, bias=True)
+  )
+)
+# Model Parameters =  10971429
+Traceback (most recent call last):
+  File "train.py", line 130, in <module>
+    algo = SequenceModelTrainer(
+  File "/playground/neural-robot-dynamics/algorithms/sequence_model_trainer.py", line 32, in __init__
+    super().__init__(neural_env, cfg, model_checkpoint_path, device)
+  File "/playground/neural-robot-dynamics/algorithms/vanilla_trainer.py", line 159, in __init__
+    self.logger.init_wandb(cfg['wandb']['project'], cfg['wandb']['name'])
+  File "/playground/neural-robot-dynamics/utils/logger.py", line 29, in init_wandb
+    self.wandb = wandb.init(
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/wandb_init.py", line 1595, in init
+    get_sentry().reraise(e)
+  File "/usr/local/lib/python3.8/dist-packages/wandb/analytics/sentry.py", line 190, in reraise
+    raise exc.with_traceback(tb)
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/wandb_init.py", line 1516, in init
+    wi.maybe_login(init_settings)
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/wandb_init.py", line 196, in maybe_login
+    wandb_login._login(
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/wandb_login.py", line 190, in _login
+    auth = _find_or_prompt_for_key(
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/wandb_login.py", line 266, in _find_or_prompt_for_key
+    auth = wbauth.authenticate_session(
+  File "/usr/local/lib/python3.8/dist-packages/wandb/sdk/lib/wbauth/authenticate.py", line 139, in authenticate_session
+    raise UsageError(
+wandb.errors.errors.UsageError: No API key configured. Use `wandb login` to log in.

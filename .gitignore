@@ -1,2 +1,5 @@
 neural-robot-dynamics/pretrained_models/
 .vscode/settings.json
+/neural-robot-dynamics/train/wandb
+/data/trained_models/Pupper
+/data/trained_models

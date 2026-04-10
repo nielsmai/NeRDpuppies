@@ -153,6 +153,10 @@ class VanillaTrainer:
             # create logger
             self.logger = Logger()
             self.logger.init_tensorboard(self.summary_log_dir)
+            
+            # init wandb if enabled
+            if 'wandb' in cfg and cfg['wandb'].get('enabled', False):
+                self.logger.init_wandb(cfg['wandb']['project'], cfg['wandb']['name'])
                 
             # other logging params
             self.save_interval = cli_cfg.get("save_interval", 50)

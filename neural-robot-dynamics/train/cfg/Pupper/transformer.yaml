@@ -13,10 +13,10 @@ env:
 algorithm:
   name: SequenceModelTrainer
   num_epochs: 100
-  num_iters_per_epoch: 1000
+  num_iters_per_epoch: 2000
   sample_sequence_length: 10 # the length to sample sequence from dataset
   batch_size: 512
-  num_valid_batches: 20
+  num_valid_batches: 50
   truncate_grad: True
   grad_norm: 1.0
   optimizer:
@@ -72,3 +72,8 @@ network:
       layer_sizes: [64]
       activation: relu
       layernorm: False
+
+wandb:
+  enabled: true
+  project: "NeRDpuppies"
+  name: "Pupper-transformer"
