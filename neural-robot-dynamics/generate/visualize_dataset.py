@@ -20,27 +20,45 @@ sys.path.append(base_dir)
 import argparse
 import h5py
 import numpy as np
+import shutil
 import torch
 
+from envs.warp_sim_envs import RenderMode
 from envs.neural_environment import NeuralEnvironment
 from utils import warp_utils
+from utils.python_utils import print_warning
 
-def visualize_dataset(dataset_path, num_envs, num_transitions):
+def visualize_dataset(dataset_path, num_envs, num_transitions, export_video=False, export_video_path='dataset_replay.gif', save_usd=False, save_usd_path='dataset_replay.usd', render_mode=None):
     dataset = h5py.File(dataset_path, 'r', swmr=True, libver='latest')
     env_name = dataset['data'].attrs['env']
     total_transitions = dataset['data'].attrs['total_transitions']
     print('total transitions = ', total_transitions)
 
     # create neural env
+    warp_env_cfg = {}
+    if render_mode is not None:
+        warp_env_cfg["render_mode"] = render_mode
+    elif save_usd or export_video:
+        warp_env_cfg["render_mode"] = RenderMode.USD
+
+    if export_video and warp_env_cfg.get("render_mode") != RenderMode.OPENGL:
+        print_warning(
+            'Video export requires pixel capture support. ' \
+            'Running with current renderer may disable mp4/gif export. ' \
+            'Use --render-mode opengl on a system with an available display or EGL support.'
+        )
+
     env = NeuralEnvironment(
-        env_name = env_name,
-        num_envs = num_envs,
-        warp_env_cfg = {},
-        neural_integrator_cfg = {},
-        neural_model = None,
-        default_env_mode = "ground-truth",
-        render = True
+        env_name=env_name,
+        num_envs=num_envs,
+        warp_env_cfg=warp_env_cfg,
+        neural_integrator_cfg={},
+        neural_model=None,
+        default_env_mode="ground-truth",
+        render=True,
     )
+    if export_video:
+        env.start_video_export(export_video_path)
 
     # load datase
     states = dataset['data']['states'][()].astype('float32').transpose(1, 0, 2)
@@ -62,6 +80,23 @@ def visualize_dataset(dataset_path, num_envs, num_transitions):
     for step in range(min(num_transitions, states.shape[1])):
         env.reset(initial_states = states[:, step, :])
         env.render()
+    if export_video:
+        env.end_video_export()
+    if save_usd:
+        env.save_usd()
+        usd_path = getattr(env.env.renderer, 'filename', None)
+        if usd_path is None:
+            usd_path = os.path.abspath(os.path.join(
+                os.path.dirname(__file__), '..', 'envs', 'outputs', env.env.sim_name + '.usd'
+            ))
+        else:
+            usd_path = os.path.abspath(usd_path)
+        if os.path.abspath(save_usd_path) != usd_path:
+            os.makedirs(os.path.dirname(save_usd_path), exist_ok=True)
+            shutil.copy2(usd_path, save_usd_path)
+            print(f"Copied USD to {save_usd_path}")
+        else:
+            print(f"USD saved to {usd_path}")
     print('Min vel = {}, Max vel = {}'.format(min_vel, max_vel))
 
 if __name__ == '__main__':
@@ -78,11 +113,37 @@ if __name__ == '__main__':
                         type=int,
                         default=10,
                         help='The number of parallel environments.')
+    parser.add_argument('--render-mode',
+                        type=str,
+                        choices=['usd', 'opengl', 'none'],
+                        default='usd',
+                        help='Render mode to use for visualizing the dataset.')
+    parser.add_argument('--export-video',
+                        action='store_true',
+                        help='Export a replay video from the rendered dataset.')
+    parser.add_argument('--export-video-path',
+                        type=str,
+                        default='dataset_replay.gif',
+                        help='Path to write the replay video.')
+    parser.add_argument('--save-usd',
+                        action='store_true',
+                        help='Save a USD replay of the dataset.')
+    parser.add_argument('--save-usd-path',
+                        type=str,
+                        default='dataset_replay.usd',
+                        help='Path to write the USD file.')
     
     args = parser.parse_args()
+
+    render_mode = RenderMode(args.render_mode) if args.render_mode is not None else None
 
     visualize_dataset(
         dataset_path = args.dataset_path,
         num_envs = args.num_envs,
-        num_transitions = args.num_transitions
+        num_transitions = args.num_transitions,
+        export_video = args.export_video,
+        export_video_path = args.export_video_path,
+        save_usd = args.save_usd,
+        save_usd_path = args.save_usd_path,
+        render_mode = render_mode
     )

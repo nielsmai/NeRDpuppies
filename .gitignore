@@ -3,3 +3,4 @@ neural-robot-dynamics/pretrained_models/
 /neural-robot-dynamics/train/wandb
 /data/trained_models/Pupper
 /data/trained_models
+/outputs/tmp
