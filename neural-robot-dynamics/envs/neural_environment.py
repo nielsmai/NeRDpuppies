@@ -364,8 +364,8 @@ class NeuralEnvironment():
         assert env_mode in [None, 'neural', 'ground-truth']
         assert actions.shape[0] == self.num_envs
         assert actions.shape[1] == self.action_dim
-        assert actions.device == self.torch_device or \
-            str(actions.device) == self.torch_device
+        assert str(actions.device) == str(self.torch_device), \
+            f"actions.device={actions.device}, torch_device={self.torch_device}"
 
         if env_mode is None:
             env_mode = self.default_env_mode

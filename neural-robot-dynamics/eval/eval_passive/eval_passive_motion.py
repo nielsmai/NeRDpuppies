@@ -154,6 +154,10 @@ if __name__ == '__main__':
         base_position_idx = [0, 1, 2]
         base_orientation_idx = [3, 4, 5, 6]
         joint_idx = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    elif args.env_name == 'Pupper':
+        base_position_idx = [0, 1, 2]
+        base_orientation_idx = [3, 4, 5, 6]
+        joint_idx = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     elif args.env_name == 'CubeToss':
         base_position_idx = [0, 1, 2]
         base_orientation_idx = [3, 4, 5, 6]

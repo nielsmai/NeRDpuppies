@@ -32,6 +32,8 @@ from utils.datasets import TrajectoryDataset
 from utils.python_utils import print_warning
 from utils import torch_utils
 
+from generate.trajectory_sampler_pupper import TrajectorySamplerPupper
+
 torch.set_printoptions(precision=6)
 
 class NeuralSimEvaluator:
@@ -105,19 +107,54 @@ class NeuralSimEvaluator:
         # generate ground-truth trajectories to evaluate
         # trajectories are in shape (T, B, state_dim/action_dim)
         if trajectory_source == "sampler":
-            trajectory_sampler = TrajectorySampler(
-                self.neural_env,
-                joint_q_min = JOINT_Q_MIN[robot_name],
-                joint_q_max = JOINT_Q_MAX[robot_name],
-                joint_qd_min = JOINT_QD_MIN[robot_name],
-                joint_qd_max = JOINT_QD_MAX[robot_name],
-                joint_act_scale = JOINT_ACT_SCALE.get(robot_name, 0.0)
-            )
+            if robot_name == 'Pupper':
+                q_min_full = np.concatenate([
+                    np.array([-1.0, -1.0, 0.15]),
+                    np.array([-1.0, -1.0, -1.0, -1.0]),
+                    JOINT_Q_MIN[robot_name]
+                ])
+                q_max_full = np.concatenate([
+                    np.array([1.0, 1.0, 0.45]),
+                    np.array([1.0, 1.0, 1.0, 1.0]),
+                    JOINT_Q_MAX[robot_name]
+                ])
+                qd_min_full = np.concatenate([
+                    np.array([-1.0, -1.0, -1.0]),
+                    np.array([-3.14, -3.14, -3.14]),
+                    JOINT_QD_MIN[robot_name]
+                ])
+                qd_max_full = np.concatenate([
+                    np.array([1.0, 1.0, 1.0]),
+                    np.array([3.14, 3.14, 3.14]),
+                    JOINT_QD_MAX[robot_name]
+                ])
+
+                trajectory_sampler = TrajectorySamplerPupper(
+                    self.neural_env,
+                    joint_q_min=q_min_full,
+                    joint_q_max=q_max_full,
+                    joint_qd_min=qd_min_full,
+                    joint_qd_max=qd_max_full,
+                    joint_act_scale=JOINT_ACT_SCALE.get(robot_name, 0.0)
+                )
+            else:
+                trajectory_sampler = TrajectorySampler(
+                    self.neural_env,
+                    joint_q_min = JOINT_Q_MIN[robot_name],
+                    joint_q_max = JOINT_Q_MAX[robot_name],
+                    joint_qd_min = JOINT_QD_MIN[robot_name],
+                    joint_qd_max = JOINT_QD_MAX[robot_name],
+                    joint_act_scale = JOINT_ACT_SCALE.get(robot_name, 0.0)
+                )
             trajectories = trajectory_sampler.sample_trajectories_action_mode(
                 num_transitions = num_traj * self.eval_horizon,
                 trajectory_length = self.eval_horizon,
                 passive = passive
             )
+            # Move to torch_device
+            trajectories['states'] = trajectories['states'].to(self.neural_env.torch_device)
+            trajectories['next_states'] = trajectories['next_states'].to(self.neural_env.torch_device)
+            trajectories['actions'] = trajectories['actions'].to(self.neural_env.torch_device)
         elif trajectory_source == "reference":
             assert eval_trajectories is not None, \
                 "'eval_trajectories' is None but 'trajectory_source' is 'reference'"
@@ -126,6 +163,10 @@ class NeuralSimEvaluator:
                 'next_states': eval_trajectories['rollout_states'][1:, ...],
                 'actions': eval_trajectories['actions']
             }
+            # Move to torch_device
+            trajectories['states'] = trajectories['states'].to(self.neural_env.torch_device)
+            trajectories['next_states'] = trajectories['next_states'].to(self.neural_env.torch_device)
+            trajectories['actions'] = trajectories['actions'].to(self.neural_env.torch_device)
         elif trajectory_source == "dataset":
             """
                 Should be careful when trajectory_source is 'dataset', 
@@ -150,14 +191,14 @@ class NeuralSimEvaluator:
             ])
 
             trajectories['states'] = (
-                trajectories['states'].transpose(0, 1).to(self.device)
+                trajectories['states'].transpose(0, 1).to(self.neural_env.torch_device)
             ) #  to (T, B, state_dim)
             trajectories['next_states'] = (
-                trajectories['next_states'].transpose(0, 1).to(self.device)
+                trajectories['next_states'].transpose(0, 1).to(self.neural_env.torch_device)
             )
             if 'actions' in trajectories:
                 trajectories['actions'] = (
-                    trajectories['actions'].transpose(0, 1).to(self.device)
+                    trajectories['actions'].transpose(0, 1).to(self.neural_env.torch_device)
                 )
             else:
                 if self.neural_env.action_dim == self.neural_env.joint_act_dim:
@@ -170,11 +211,11 @@ class NeuralSimEvaluator:
                                 1, 1, self.neural_env.action_dim
                             )
                         )[:, :, self.neural_env.controllable_dofs]
-                    ).transpose(0, 1).to(self.device)
+                    ).transpose(0, 1).to(self.neural_env.torch_device)
                 else:
                     trajectories['actions'] = torch.zeros(
                         (self.eval_horizon, num_traj, self.neural_env.action_dim),
-                        device = self.device)
+                        device = self.neural_env.torch_device)
         else:
             raise NotImplementedError
         
@@ -182,6 +223,7 @@ class NeuralSimEvaluator:
 
         initial_states = trajectories['states'][0, :total_traj, :]
         actions = trajectories['actions'][:, :total_traj, :]
+        actions = actions.to(self.neural_env.torch_device)
         target_next_states = trajectories['next_states'][:, :total_traj, :]
 
         # rollout with neural_env                  
@@ -221,7 +263,7 @@ class NeuralSimEvaluator:
         for round in tqdm.tqdm(range(num_rounds)):
             start_id, end_id = round * num_envs, (round + 1) * num_envs
             self.neural_env.reset(
-                initial_states[start_id: end_id]
+                initial_states[start_id: end_id].to(self.neural_env.torch_device)
             )
             self.neural_env.init_rnn(num_envs)
                 
