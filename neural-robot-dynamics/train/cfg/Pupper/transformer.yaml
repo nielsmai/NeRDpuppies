@@ -12,7 +12,7 @@ env:
   
 algorithm:
   name: SequenceModelTrainer
-  num_epochs: 100
+  num_epochs: 3
   num_iters_per_epoch: 2000
   sample_sequence_length: 10 # the length to sample sequence from dataset
   batch_size: 512
@@ -25,9 +25,9 @@ algorithm:
     lr_schedule: linear
 
   dataset:
-    train_dataset_path: /outputs/Pupper/pupper_dataset.hdf5
+    train_dataset_path: /data/datasets/Pupper/dataset.hdf5
     valid_datasets: 
-      exp_trajectory: /outputs/Pupper/pupper_dataset.hdf5
+      exp_trajectory: /data/datasets/Pupper/dataset.hdf5
     max_capacity: 100000000
     num_data_workers: 0
   
@@ -35,7 +35,7 @@ algorithm:
     mode: dataset
     rollout_horizon: 10
     num_rollouts: 512
-    dataset_path: /outputs/Pupper/pupper_dataset.hdf5
+    dataset_path: /data/datasets/Pupper/dataset.hdf5
     passive: False
 
 inputs:
