@@ -8,13 +8,13 @@ env:
     states_embedding_type: identical
     prediction_type: relative
     orientation_prediction_parameterization: quaternion
-    num_states_history: 10     # number of states and actions to pass into model. Default: 1 means use current state and action
+    num_states_history: 30     # number of states and actions to pass into model. Default: 1 means use current state and action
   
 algorithm:
   name: SequenceModelTrainer
-  num_epochs: 3
+  num_epochs: 200
   num_iters_per_epoch: 2000
-  sample_sequence_length: 10 # the length to sample sequence from dataset
+  sample_sequence_length: 30 # the length to sample sequence from dataset
   batch_size: 512
   num_valid_batches: 50
   truncate_grad: True
@@ -33,7 +33,7 @@ algorithm:
   
   eval:
     mode: dataset
-    rollout_horizon: 10
+    rollout_horizon: 30
     num_rollouts: 512
     dataset_path: /data/datasets/Pupper/dataset.hdf5
     passive: False
@@ -59,7 +59,7 @@ network:
       layernorm: False
 
   transformer:
-    block_size: 32
+    block_size: 64
     n_layer: 6       # number of transformer blocks
     n_head: 12        # num transformer heads
     n_embd: 384       # size of input embedding
@@ -69,7 +69,7 @@ network:
   model:
     output_tanh: False
     mlp: 
-      layer_sizes: [64]
+      layer_sizes: [128, 64]
       activation: relu
       layernorm: False
 
