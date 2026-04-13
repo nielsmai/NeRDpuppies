@@ -1,0 +1,23 @@
+policies:
+  neural:
+    policy_folder: ../../pretrained_models/RL_policies/Ant/forward_walk/
+    policy_path: nn/PupperWalk.pth
+
+simulators:
+  gt:
+    env_mode: ground-truth
+  neural:
+    env_mode: neural
+    model_path: /teamspace/studios/this_studio/NeRDpuppies/data/trained_models/Pupper/04-11-2026-18-08-14/nn/final_model.pt
+
+env:  
+  env_name: Pupper
+  env_mode: ground-truth
+  max_episode_length: 1000
+  reward_bias: 0.
+
+  warp_env_cfg:
+    task: forward
+    obs_type: dflex
+    random_reset: True
+    camera_tracking: True
