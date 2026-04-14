@@ -10,11 +10,95 @@ import numpy as np
 from envs.warp_sim_envs import Environment, IntegratorType, RenderMode
 
 # --- PUPPER SPECIFIC CONSTANTS ---
-PUPPER_URDF_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "../../../urdf/standford_pupper_clean.urdf")
-PUPPER_DEFAULT_HEIGHT = 0.3
+PUPPER_URDF_PATH = "/teamspace/studios/this_studio/NeRDpuppies/urdf/standford_pupper_clean.urdf"
+PUPPER_DEFAULT_HEIGHT = 0.23
 PUPPER_NUM_CONTACTS = 4
+
+@wp.kernel
+def pupperv2_forward_cost(
+    joint_q: wp.array(dtype=wp.float32),
+    joint_qd: wp.array(dtype=wp.float32),
+    contact_depths: wp.array(dtype=wp.float32),
+    joint_act: wp.array(dtype=wp.float32),
+    dof_q: int,
+    dof_qd: int,
+    num_contacts: int,
+    # outputs
+    cost: wp.array(dtype=wp.float32),
+    terminated: wp.array(dtype=wp.bool)
+):
+    env_id = wp.tid()
+
+    # Z-up: position is (x, y, z), z is height
+    torso_pos = wp.vec3(
+        joint_q[dof_q * env_id + 0],
+        joint_q[dof_q * env_id + 1],
+        joint_q[dof_q * env_id + 2]
+    )
+
+    # In Warp's Featherstone, spatial velocity is [ang_vel(0,1,2), lin_vel(3,4,5)]
+    # Z-up: lin_vel[0]=x-fwd, lin_vel[1]=y-lateral, lin_vel[2]=z-up
+    lin_vel = wp.vec3(
+        joint_qd[dof_qd * env_id + 3],
+        joint_qd[dof_qd * env_id + 4],
+        joint_qd[dof_qd * env_id + 5]
+    )
+    ang_vel = wp.vec3(
+        joint_qd[dof_qd * env_id + 0],
+        joint_qd[dof_qd * env_id + 1],
+        joint_qd[dof_qd * env_id + 2]
+    )
+
+    # Convert twist to CoM velocity
+    lin_vel = lin_vel - wp.cross(torso_pos, ang_vel)
+
+    # Forward = +X, lateral = Y, yaw = Z axis rotation
+    target_x_vel  = 0.5   # m/s forward — Pupper is small, 0.5 is a brisk walk
+    target_y_vel  = 0.0   # no lateral drift
+    target_yaw_vel = 0.0  # no turning
+
+    # lin_vel[0] = forward (X), lin_vel[1] = lateral (Y)
+    lin_vel_error = (lin_vel[0] - target_x_vel) ** 2. + (lin_vel[1] - target_y_vel) ** 2.
+    # ang_vel[2] = yaw (Z-up)
+    ang_vel_error = (ang_vel[2] - target_yaw_vel) ** 2.
+
+    rew_lin_coef    = 1.0
+    rew_ang_coef    = 0.5
+    rew_torque_coef = 2.5e-5
+
+    rew_lin_vel = wp.exp(-lin_vel_error) * rew_lin_coef
+    rew_ang_vel = wp.exp(-ang_vel_error) * rew_ang_coef
+
+    # 12 actuated joints: 3 per leg (abduction, upper, lower) x 4 legs
+    # order from URDF: leftFront(abd,upper,lower), leftRear(abd,upper,lower),
+    #                  rightFront(abd,upper,lower), rightRear(abd,upper,lower)
+    rew_torque = 0.0
+    for i in range(12):
+        rew_torque -= (joint_act[env_id * 12 + i]) ** 2.0 * rew_torque_coef
+
+    c = -rew_lin_vel - rew_ang_vel - rew_torque
+    if c > 0.:
+        c = 0.
+    wp.atomic_add(cost, env_id, c)
+
+    if terminated:
+        # Pupper only has 4 toe contacts (PUPPER_NUM_CONTACTS = 4)
+        # indices 0-3: leftFrontToe, leftRearToe, rightFrontToe, rightRearToe
+        # Toe sphere radius = 0.0095m — negative depth means penetration/collision
+        # No knee contacts unlike ANYmal — toes are the only contact bodies
+
+        # Height termination — standing z=0.3, collapse below ~half
+        if torso_pos[2] < 0.15:
+            terminated[env_id] = True
+
+        # Roll/pitch termination via upright check
+        # quaternion is at joint_q[3:7] — extract z-component of up vector
+        # up vector in world = R * [0,0,1], z component = 1 - 2*(qx^2 + qy^2)
+        qx = joint_q[dof_q * env_id + 3]
+        qy = joint_q[dof_q * env_id + 4]
+        upright_z = 1.0 - 2.0 * (qx * qx + qy * qy)
+        if upright_z < 0.5:   # >60 deg tilt
+            terminated[env_id] = True
 
 @wp.kernel(enable_backward=False)
 def reset_pupper_dataset(
@@ -30,13 +114,12 @@ def reset_pupper_dataset(
     joint_qd: wp.array(dtype=wp.float32),
 ):
     env_id = wp.tid()
-
+    random_state = wp.rand_init(seed, env_id)
     if reset[env_id]:
         for i in range(dof_q_per_env):
             joint_q[env_id * dof_q_per_env + i] = default_joint_q_init[env_id * dof_q_per_env + i]
-        for i in range(dof_qd_per_env):
-            joint_qd[env_id * dof_qd_per_env + i] = default_joint_qd_init[env_id * dof_qd_per_env + i]
-
+        for i in range(12):
+            joint_qd[env_id * dof_qd_per_env + 6 + i] = 0.1 * wp.randf(random_state, -1., 1.)
         # Force safe base height and upright orientation
         joint_q[env_id * dof_q_per_env + 2] = 0.3
         joint_q[env_id * dof_q_per_env + 3] = 0.0
@@ -44,9 +127,8 @@ def reset_pupper_dataset(
         joint_q[env_id * dof_q_per_env + 5] = 0.0
         joint_q[env_id * dof_q_per_env + 6] = 1.0
 
+        
         if random_reset:
-            random_state = wp.rand_init(seed, env_id)
-
             joint_q[env_id * dof_q_per_env + 0] += wp.randf(random_state, -0.05, 0.05)
             joint_q[env_id * dof_q_per_env + 1] += wp.randf(random_state, -0.05, 0.05)
             joint_q[env_id * dof_q_per_env + 2] += wp.randf(random_state, -0.05, 0.05)
@@ -111,7 +193,7 @@ class PupperEnvironment(Environment):
     num_envs = 1
     activate_ground_plane = True
 
-    action_strength = 4.0
+    action_strength = 1.0
     controllable_dofs = np.arange(12)
     control_gains = np.array([5.0] * 12)
     control_limits = [(-1.0, 1.0)] * 12
@@ -162,7 +244,7 @@ class PupperEnvironment(Environment):
             limit_ke=1.0e3,
             limit_kd=1.0e1,
             enable_self_collisions=False,
-            collapse_fixed_joints=True,
+            collapse_fixed_joints=False,
             ignore_inertial_definitions=False,
         )
 
@@ -236,12 +318,28 @@ class PupperEnvironment(Environment):
             None,
             self.state,
         )
-
+    
     def compute_cost_termination(self, state, control, step, traj_length, cost, terminated):
         if not self.uses_generalized_coordinates:
             wp.sim.eval_ik(self.model, state, state.joint_q, state.joint_qd)
-        pass
-
+            
+        num_contacts = self.num_rigid_contacts_per_env if self.num_rigid_contacts_per_env is not None else 0
+        if self.task == "forward":
+            wp.launch(
+                pupperv2_forward_cost,
+                dim=self.num_envs,
+                inputs=[
+                    state.joint_q, 
+                    state.joint_qd,
+                    self.model.rigid_contact_depth,   # from AbstractContactEnvironment
+                    control.joint_act,
+                    self.dof_q_per_env,
+                    self.dof_qd_per_env,
+                    num_contacts,
+                ],
+                outputs=[cost, terminated],
+                device=self.device,
+            )
     @property
     def observation_dim(self):
         if self.obs_type == "dflex":
