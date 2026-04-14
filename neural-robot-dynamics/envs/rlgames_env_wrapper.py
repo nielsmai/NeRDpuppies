@@ -134,6 +134,14 @@ class RlgamesEnvironment(vecenv.IVecEnv):
             self.neural_env, render_mode, use_gymnasium=False
         )
         self.action_space = get_action_space(self.neural_env, use_gymnasium=False)
+        self.usd_exporter = None
+        if render_mode == "usd":
+            import warp.sim.render as wp_render
+            # This creates the snapshot tool
+            self.usd_exporter = wp_render.UsdRenderer(
+                self.neural_env.env.model, 
+                "pupper_snapshot.usd"
+            )
 
     def get_state_observations(self):
         self.neural_env.compute_observations(
@@ -182,6 +190,9 @@ class RlgamesEnvironment(vecenv.IVecEnv):
             for _ in range(self.control_steps):
                 self.neural_env.step(actions)
 
+        if hasattr(self, 'usd_exporter') and self.usd_exporter is not None:
+            # This tells the USD file: "Write down where the robot is RIGHT NOW"
+            self.usd_exporter.render(self.neural_env.env.state)
         # reward is single-step, not cumulative
         self.cost_buf.zero_()
         self.done_buf.zero_()
@@ -213,7 +224,7 @@ class RlgamesEnvironment(vecenv.IVecEnv):
         self.render()
         obs = self.get_observations()
 
-        self.neural_env.reset_envs(self.done_buf)
+        #self.neural_env.reset_envs(self.done_buf)
 
         self._step_count += 1
 
@@ -233,6 +244,10 @@ class RlgamesEnvironment(vecenv.IVecEnv):
         """
         Clean up the environment's resources.
         """
+        if hasattr(self, 'usd_exporter') and self.usd_exporter is not None:
+            self.usd_exporter.save()
+            print("Snapshot saved to pupper_snapshot.usd")
+
         if self.neural_env.renderer:
             self.neural_env.renderer.close()
 
