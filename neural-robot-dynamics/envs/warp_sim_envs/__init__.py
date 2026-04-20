@@ -7,3 +7,4 @@ from .env_anymal_joint_position_control import AnymalJointPositionControlEnviron
 from .env_pendulum_with_contact import PendulumWithContactEnvironment
 from .env_cube_toss import CubeTossingEnvironment
 from .env_pupper import PupperEnvironment
+from .env_pupper_joint_position_control import PupperJointPositionControlEnvironment
