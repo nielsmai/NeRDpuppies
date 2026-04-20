@@ -32,6 +32,7 @@ ENV_CLS = {
     "CubeToss": getattr(warp_sim_envs, "CubeTossingEnvironment", None),
     "Anymal": getattr(warp_sim_envs, "AnymalEnvironment", None),
     "Pupper": getattr(warp_sim_envs, "PupperEnvironment", None),
+    "PupperPD": getattr(warp_sim_envs, "PupperJointPositionControlEnvironment", None),
     "AnymalJointPositionControl": getattr(warp_sim_envs, "AnymalJointPositionControlEnvironment", None),
 }
 
