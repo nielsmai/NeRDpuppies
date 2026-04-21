@@ -10,7 +10,7 @@ import numpy as np
 from envs.warp_sim_envs import Environment, IntegratorType, RenderMode
 
 # --- PUPPER SPECIFIC CONSTANTS ---
-PUPPER_URDF_PATH = "/teamspace/studios/this_studio/NeRDpuppies/urdf/standford_pupper_clean.urdf"
+PUPPER_URDF_PATH = os.path.join(os.path.dirname(__file__),"../../../urdf/standford_pupper_clean.urdf")
 PUPPER_DEFAULT_HEIGHT = 0.23
 PUPPER_NUM_CONTACTS = 4
 

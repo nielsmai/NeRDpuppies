@@ -98,6 +98,19 @@ class RlgamesEnvironment(vecenv.IVecEnv):
         self.reward_scale = reward_scale
         self.reward_bias = reward_bias
 
+        # Per-episode reward/length tracking for wandb logging
+        self._ep_reward_buf = torch.zeros(self.num_envs, dtype=torch.float32)
+        self._ep_length_buf = torch.zeros(self.num_envs, dtype=torch.float32)
+        self._ep_count = 0
+
+        # Per-episode locomotion stat accumulators (all on CPU)
+        self._ep_vx_buf      = torch.zeros(self.num_envs, dtype=torch.float32)  # forward vel
+        self._ep_vy_buf      = torch.zeros(self.num_envs, dtype=torch.float32)  # |lateral vel|
+        self._ep_wz_buf      = torch.zeros(self.num_envs, dtype=torch.float32)  # |yaw rate|
+        self._ep_height_buf  = torch.zeros(self.num_envs, dtype=torch.float32)  # base height
+        self._ep_upright_buf = torch.zeros(self.num_envs, dtype=torch.float32)  # upright score
+        self._ep_torque_buf  = torch.zeros(self.num_envs, dtype=torch.float32)  # mean sq torque
+
         if self.neural_env.use_graph_capture:
             with wp.ScopedCapture() as capture:
                 self.neural_env.update()
@@ -230,6 +243,69 @@ class RlgamesEnvironment(vecenv.IVecEnv):
 
         rewards = wp.to_torch(self.rew_buf)
         dones = wp.to_torch(self.done_buf)
+
+        # Accumulate per-episode rewards and lengths
+        rewards_cpu = rewards.cpu()
+        dones_cpu = dones.cpu()
+        self._ep_reward_buf += rewards_cpu
+        self._ep_length_buf += 1
+
+        # Accumulate locomotion stats from current state
+        try:
+            import wandb
+            _wandb_active = wandb.run is not None
+        except ImportError:
+            _wandb_active = False
+
+        if _wandb_active:
+            states = self.neural_env.states.cpu()          # [num_envs, state_dim]
+            dof_q  = self.neural_env.dof_q_per_env
+            vx      = states[:, dof_q + 3]                # forward velocity
+            vy      = states[:, dof_q + 4].abs()          # |lateral velocity|
+            wz      = states[:, dof_q + 2].abs()          # |yaw rate|
+            height  = states[:, 2]                        # base height (z)
+            qx      = states[:, 3]
+            qy      = states[:, 4]
+            upright = 1.0 - 2.0 * (qx * qx + qy * qy)   # 1.0 = fully upright
+            torques = self.neural_env.joint_acts.cpu()    # [num_envs, 12]
+            torque_sq = (torques ** 2).mean(dim=1)
+
+            self._ep_vx_buf      += vx
+            self._ep_vy_buf      += vy
+            self._ep_wz_buf      += wz
+            self._ep_height_buf  += height
+            self._ep_upright_buf += upright
+            self._ep_torque_buf  += torque_sq
+
+        # Log completed episodes to wandb
+        done_indices = dones_cpu.nonzero(as_tuple=False).squeeze(-1)
+        if len(done_indices) > 0:
+            if _wandb_active:
+                timeouts_cpu = wp.to_torch(self.timeout_buf).cpu()
+                for idx in done_indices:
+                    n = max(self._ep_length_buf[idx].item(), 1)
+                    self._ep_count += 1
+                    is_fall = (not timeouts_cpu[idx].item()) and dones_cpu[idx].item()
+                    wandb.log({
+                        'eval/episode_reward':   self._ep_reward_buf[idx].item(),
+                        'eval/episode_length':   self._ep_length_buf[idx].item(),
+                        'eval/mean_forward_vel': self._ep_vx_buf[idx].item()      / n,
+                        'eval/mean_lateral_vel': self._ep_vy_buf[idx].item()      / n,
+                        'eval/mean_yaw_rate':    self._ep_wz_buf[idx].item()      / n,
+                        'eval/mean_height':      self._ep_height_buf[idx].item()  / n,
+                        'eval/mean_upright':     self._ep_upright_buf[idx].item() / n,
+                        'eval/mean_torque_sq':   self._ep_torque_buf[idx].item()  / n,
+                        'eval/fall':             1.0 if is_fall else 0.0,
+                    }, step=self._ep_count)
+            # Reset counters for completed envs
+            self._ep_reward_buf[done_indices]  = 0.0
+            self._ep_length_buf[done_indices]  = 0.0
+            self._ep_vx_buf[done_indices]      = 0.0
+            self._ep_vy_buf[done_indices]      = 0.0
+            self._ep_wz_buf[done_indices]      = 0.0
+            self._ep_height_buf[done_indices]  = 0.0
+            self._ep_upright_buf[done_indices] = 0.0
+            self._ep_torque_buf[done_indices]  = 0.0
 
         # get extras
         self.neural_env.get_extras(self.extras)

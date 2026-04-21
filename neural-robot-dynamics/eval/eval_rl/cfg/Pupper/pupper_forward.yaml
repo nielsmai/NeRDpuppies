@@ -1,7 +1,8 @@
 env:
   env_name: Pupper
   env_mode: neural
-  model_path: /teamspace/studios/this_studio/NeRDpuppies/data/trained_models/Pupper/04-11-2026-18-08-14/nn/final_model.pt
+  # model_path: /teamspace/studios/this_studio/NeRDpuppies/data/trained_models/Pupper/04-11-2026-18-08-14/nn/final_model.pt
+  model_path: ../../../data/trained_models/Pupper/test/04-18-2026-05-32-44/nn/best_eval_model.pt
   num_envs: 500
 
   max_episode_length: 1000
