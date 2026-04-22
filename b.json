@@ -1,0 +1,13 @@
+{
+   "env_name": "PupperPD",
+   "policy_type": "nn",
+   "policy_network_size_list": "128,64,32",
+   "filter": "MeanStdFilter",
+   "env_mode": "neural",
+   "max_episode_length": 1000,
+   "model_path": "puppersim/puppersim/reacher/a2.npz",
+   "num_envs": 1,
+   "reward_bias": 0,
+   "seed": 0,
+   "horizon_length": 64
+}
