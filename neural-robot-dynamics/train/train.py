@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from html import parser
 import sys, os
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -36,16 +37,18 @@ def add_additional_params(parser):
     return parser
 
 if __name__ == '__main__':
-    args_list = ['--cfg', './cfg/Ant/transformer.yaml',
-                 '--logdir', '../../data/trained_models/Ant/test/']
+    # args_list = ['--cfg', './cfg/Pupper/transformer.yaml',
+    #          '--logdir', '../../data/trained_models/Pupper/test/']
 
-    solve_argv_conflict(args_list)
+    # solve_argv_conflict(args_list)
 
     parser = get_parser()
 
     parser = add_additional_params(parser)
 
-    args = parser.parse_args(args_list + sys.argv[1:])
+    # args = parser.parse_args(args_list + sys.argv[1:])
+
+    args = parser.parse_args()
 
     # load config
     with open(args.cfg, 'r') as f:

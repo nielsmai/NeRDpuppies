@@ -15,6 +15,7 @@
 
 import os
 import sys
+import datetime
 
 base_dir = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../")
@@ -37,7 +38,7 @@ from envs.warp_sim_envs import RenderMode
 def get_args():
     parser = argparse.ArgumentParser("")
     parser.add_argument("--rl-cfg", 
-                        default="./cfg/Cartpole/cartpole.yaml", 
+                        default=None, 
                         type=str, 
                         help="Path to rl config file.")
     # Some command-line overriding parameters to provide a flexible experiment experience.
@@ -109,19 +110,47 @@ def get_args():
                         default = 'video.gif')
     parser.add_argument('--export-usd',
                         action = 'store_true')
-    
+    parser.add_argument('--usd-output-path',
+                        type=str,
+                        default=None,
+                        help="Path for the exported USD file. Defaults to "
+                             "env_<robot>_<timestamp>.usd. A timestamp is "
+                             "appended automatically if the file already exists.")
+    parser.add_argument('--wandb-eval',
+                        action='store_true',
+                        help="Log this evaluation run to Weights & Biases.")
+    parser.add_argument('--wandb-eval-project',
+                        type=str,
+                        default=None,
+                        help="W&B project to log eval run to (defaults to "
+                             "the project in rl_cfg if set).")
+    parser.add_argument('--wandb-eval-name',
+                        type=str,
+                        default=None,
+                        help="W&B run name for the eval run. "
+                             "Defaults to eval_<timestamp>.")
+
     args = parser.parse_args()
     
     return args
 
 def load_rl_config(args):
-    if args.playback is not None:
+    if args.rl_cfg is not None:
+        # Explicit --rl-cfg always takes priority
+        rl_cfg_path = args.rl_cfg
+    elif args.playback is not None:
+        # Auto-discover rl_cfg.yaml saved alongside the trained model
         policy_dir = os.path.abspath(
             os.path.join(os.path.dirname(os.path.abspath(args.playback)), '../')
         )
         rl_cfg_path = os.path.join(policy_dir, 'rl_cfg.yaml')
+        if not os.path.exists(rl_cfg_path):
+            raise FileNotFoundError(
+                f"No rl_cfg.yaml found at {rl_cfg_path}. "
+                "Pass --rl-cfg explicitly to specify a config file."
+            )
     else:
-        rl_cfg_path = args.rl_cfg
+        raise ValueError("Either --rl-cfg or --playback must be provided.")
     
     with open(rl_cfg_path, 'r') as f:
         rl_cfg = yaml.load(f, Loader=yaml.SafeLoader)
@@ -290,12 +319,57 @@ if __name__ == '__main__':
     if args.playback is None:
         train_policy(runner)
     else:
-        evaluate_policy(runner, args.playback)
+        # --- Optional W&B eval logging ---
+        wb_run = None
+        if args.wandb_eval:
+            import wandb
+            rl_cfg_wb = rl_config.get('rl', {}).get('config', {})
+            wb_project = (
+                args.wandb_eval_project
+                or rl_cfg_wb.get('wandb_project')
+                or 'nerd-eval'
+            )
+            wb_name = (
+                args.wandb_eval_name
+                or f"eval_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
+            wb_run = wandb.init(
+                project=wb_project,
+                name=wb_name,
+                config={
+                    'rl_cfg': rl_config,
+                    'playback': args.playback,
+                    'env_mode': args.env_mode,
+                    'seed': args.seed,
+                },
+                resume='never',
+            )
+
+        results = evaluate_policy(runner, args.playback)
+
+        if wb_run is not None:
+            if results is not None:
+                wb_run.log({'eval/results': results})
+            wb_run.finish()
 
     if args.playback is not None and args.export_video:
         env.end_video_export()
     if args.playback is not None and args.export_usd:
-        env.save_usd()
+        # Resolve USD output path, appending a timestamp to avoid overwrites
+        usd_path = args.usd_output_path
+        if usd_path is None:
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            usd_path = f"env_{env.robot_name}_{timestamp}.usd"
+        else:
+            if not usd_path.endswith('.usd'):
+                usd_path += '.usd'
+            if os.path.exists(usd_path):
+                base, ext = os.path.splitext(usd_path)
+                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+                usd_path = f"{base}_{timestamp}{ext}"
+        os.makedirs(os.path.dirname(os.path.abspath(usd_path)) or '.', exist_ok=True)
+        print(f"[INFO] Saving USD to: {usd_path}")
+        env.save_usd(path=usd_path)
     
     print('visited states range:')
     for i in range(len(env.visited_state_min)):

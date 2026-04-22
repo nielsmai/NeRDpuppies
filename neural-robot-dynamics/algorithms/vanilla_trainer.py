@@ -376,6 +376,10 @@ class VanillaTrainer:
             grad_info = {'grad_norm_before_clip': 0.}
             if self.truncate_grad:
                 grad_info['grad_norm_after_clip'] = 0.
+            # Track weight norms per named layer
+            grad_info['weight_norms'] = {}
+            for name, param in self.neural_model.named_parameters():
+                grad_info['weight_norms'][name] = 0.
         else:
             grad_info = {}
 
@@ -437,6 +441,10 @@ class VanillaTrainer:
             grad_info['grad_norm_before_clip'] /= num_batches
             if self.truncate_grad:
                 grad_info['grad_norm_after_clip'] /= num_batches
+            # Compute weight norms once at epoch end (cheaper than per-batch)
+            with torch.no_grad():
+                for name, param in self.neural_model.named_parameters():
+                    grad_info['weight_norms'][name] = param.data.norm(2).item()
 
         return avg_loss, avg_loss_itemized, grad_info
             
@@ -567,6 +575,19 @@ class VanillaTrainer:
                             grad_info['grad_norm_after_clip'], 
                             epoch
                         )
+                    
+                    # ── weight norms per layer ──────────────────────────────
+                    for name, norm_val in grad_info['weight_norms'].items():
+                        self.logger.add_scalar(
+                            f'weights/{name}_norm/epoch', norm_val, epoch
+                        )
+
+                    # ── overfitting ratio (train vs first valid loss) ───────
+                    first_valid_name = next(iter(self.valid_datasets.keys()))
+                    overfit_ratio = avg_train_loss / (avg_valid_losses[first_valid_name] + 1e-8)
+                    self.logger.add_scalar(
+                        'training/overfit_ratio/epoch', overfit_ratio, epoch
+                    )
 
                 for valid_dataset_name in self.valid_datasets.keys():
                     self.logger.add_scalar(
@@ -645,6 +666,18 @@ class VanillaTrainer:
                 self.logger.add_scalar(
                     f'eval_details/{error_metric_name}_step_{i}/epoch',
                     error_stats['step-wise'][error_metric_name][i],
+                    epoch
+                )
+        
+        for error_metric_name in error_stats['step-wise'].keys():
+            stepwise = error_stats['step-wise'][error_metric_name]
+            if stepwise.shape[0] > 1:
+                first = float(stepwise[0])
+                last = float(stepwise[-1])
+                error_growth = last / (first + 1e-8)
+                self.logger.add_scalar(
+                    f'eval_details/{error_metric_name}_growth_ratio/epoch',
+                    error_growth,
                     epoch
                 )
         

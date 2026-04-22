@@ -556,8 +556,11 @@ class NeuralEnvironment():
                 self.video_frame_cnt = 0
         time.sleep(self.env.frame_dt)
     
-    def save_usd(self):
-        self.env.renderer.save()
+    def save_usd(self, path=None):
+        if path is not None:
+            self.env.renderer.stage.Export(path)
+        else:
+            self.env.renderer.save()
 
 
 

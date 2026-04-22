@@ -8,14 +8,14 @@ env:
     states_embedding_type: identical
     prediction_type: relative
     orientation_prediction_parameterization: quaternion
-    num_states_history: 30     # number of states and actions to pass into model. Default: 1 means use current state and action
+    num_states_history: 32
   
 algorithm:
   name: SequenceModelTrainer
-  num_epochs: 200
+  num_epochs: 100
   num_iters_per_epoch: 2000
-  sample_sequence_length: 30 # the length to sample sequence from dataset
-  batch_size: 512
+  sample_sequence_length: 32
+  batch_size: 256
   num_valid_batches: 50
   truncate_grad: True
   grad_norm: 1.0
@@ -23,19 +23,17 @@ algorithm:
     lr_start: 1e-3
     lr_end: 1e-4
     lr_schedule: linear
-
   dataset:
-    train_dataset_path: /data/datasets/Pupper/dataset.hdf5
+    train_dataset_path: /playground/data/datasets/Pupper/dataset.hdf5
     valid_datasets: 
-      exp_trajectory: /data/datasets/Pupper/dataset.hdf5
+      exp_trajectory: /playground/data/datasets/Pupper/dataset.hdf5
     max_capacity: 100000000
     num_data_workers: 0
-  
-  eval:
+  eval:                        # ← moved here
     mode: dataset
-    rollout_horizon: 30
+    rollout_horizon: 64
     num_rollouts: 512
-    dataset_path: /data/datasets/Pupper/dataset.hdf5
+    dataset_path: /playground/data/datasets/Pupper/dataset.hdf5
     passive: False
 
 inputs:
@@ -59,12 +57,12 @@ network:
       layernorm: False
 
   transformer:
-    block_size: 64
-    n_layer: 6       # number of transformer blocks
-    n_head: 12        # num transformer heads
-    n_embd: 384       # size of input embedding
-    dropout: 0.0      # for pretraining 0 is good, for finetuning try 0.1+
-    bias: False       # do we use bias inside LayerNorm and Linear layers?
+    block_size: 32
+    n_layer: 6
+    n_head: 8
+    n_embd: 384
+    dropout: 0.0
+    bias: False
 
   model:
     output_tanh: False
